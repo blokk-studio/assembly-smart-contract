@@ -189,14 +189,14 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, ERC1155Tok
 
 
 
-    function createLot(address token, uint tokenId, uint price, bool isMultiple,  uint amount  ) public onlyAllowedCaller {
+    function createLot(address token, uint tokenId, address owner, uint price, bool isMultiple,  uint amount  ) public onlyAllowedCaller {
         require(isAvailableToken(token), "NFTMarketplace: Token is not available");
         require(!isLotExists(token, tokenId), "NFTMarketplace: Lot already exists");
 
         if(isMultiple){
-            ERC1155(token).safeTransferFrom(msg.sender, address(this), tokenId, amount, "0x0");
+            ERC1155(token).safeTransferFrom(owner, address(this), tokenId, amount, "0x0");
         }else{
-            IERC721(token).safeTransferFrom(msg.sender, address(this), tokenId);
+            IERC721(token).safeTransferFrom(owner, address(this), tokenId);
         }
         
         uint lotId = ++lastLotId;
@@ -205,7 +205,7 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, ERC1155Tok
         lots[lotId].token = token;
         lots[lotId].price = price;
         lots[lotId].lotStart = block.timestamp;
-        lots[lotId].owner = msg.sender;
+        lots[lotId].owner = owner;
         lots[lotId].status = LotStatus.Active;
 
         lots[lotId].isMultiple = isMultiple;
@@ -216,17 +216,18 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, ERC1155Tok
         EnumerableSet.add(activeLots, lotId);
         activeLotCount++;
 
-        emit NewLot(lotId, tokenId, token, msg.sender, amount);
+        emit NewLot(lotId, tokenId, token, owner, amount);
 
     }
 
-    function butchCreateLots(address[] memory tokens, uint[] memory tokenIds, uint[] memory prices, bool[] memory isMultiples, uint[] memory amounts) external onlyAllowedCaller {
+    function butchCreateLots(address[] memory tokens, uint[] memory tokenIds, address[] memory owners, uint[] memory prices, bool[] memory isMultiples, uint[] memory amounts) external onlyAllowedCaller {
         require(tokens.length == tokenIds.length, "NFTMarketplace: Wrong lengths");
+        require(tokens.length == owners.length, "NFTMarketplace: Wrong lengths"); 
         require(tokens.length == prices.length, "NFTMarketplace: Wrong lengths");
         require(tokens.length == isMultiples.length, "NFTMarketplace: Wrong lengths");
         require(tokens.length == amounts.length, "NFTMarketplace: Wrong lengths");
         for (uint i; i < tokenIds.length; i++) {
-            createLot(tokens[i], tokenIds[i], prices[i], isMultiples[i], amounts[i]);
+            createLot(tokens[i], tokenIds[i], owners[i], prices[i], isMultiples[i], amounts[i]);
         }
     }
 
