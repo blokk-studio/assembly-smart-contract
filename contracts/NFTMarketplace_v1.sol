@@ -108,10 +108,10 @@ contract ReentrancyGuard {
 contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, ERC1155TokenReceiver  {
 
     enum LotStatus {
+        Inactive,
         Active,
         Successful,
-        Canceled,
-        Inactive
+        Canceled
     }
 
     struct Lot {
@@ -127,10 +127,8 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, ERC1155Tok
         bool isMultiple;
     }
 
-
-    // are all indexes needed?
     event NewLot(uint indexed lotId, uint indexed tokenId, address indexed token, address owner, uint totalSupply);
-    event SoldLot(uint indexed lotId, uint indexed tokenId, address indexed token, address buyer, uint amount, uint price); // buyer needed? 
+    event SoldLot(uint indexed lotId, uint indexed tokenId, address indexed token, address buyer, uint amount, uint price);
     event CancelLot(uint indexed lotId);
     event DeactivateLot(uint indexed lotId);
     event ActivateLot(uint indexed lotId);
@@ -189,11 +187,12 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, ERC1155Tok
 
 
 
-    function createLot(address token, uint tokenId, address owner, uint price, bool isMultiple,  uint amount  ) public onlyAllowedCaller {
+    function createLot(address token, uint tokenId, address owner, uint price, bool isMultiple, uint amount) public onlyAllowedCaller returns (uint){
         require(isAvailableToken(token), "NFTMarketplace: Token is not available");
         require(!isLotExists(token, tokenId), "NFTMarketplace: Lot already exists");
 
         if(isMultiple){
+            require(amount > 0, "NFTMarketplace: Amount must be greater than zero");
             ERC1155(token).safeTransferFrom(owner, address(this), tokenId, amount, "0x0");
         }else{
             IERC721(token).safeTransferFrom(owner, address(this), tokenId);
@@ -217,10 +216,10 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, ERC1155Tok
         activeLotCount++;
 
         emit NewLot(lotId, tokenId, token, owner, amount);
-
+        return lotId;
     }
 
-    function butchCreateLots(address[] memory tokens, uint[] memory tokenIds, address[] memory owners, uint[] memory prices, bool[] memory isMultiples, uint[] memory amounts) external onlyAllowedCaller {
+    function batchCreateLots(address[] memory tokens, uint[] memory tokenIds, address[] memory owners, uint[] memory prices, bool[] memory isMultiples, uint[] memory amounts) external onlyAllowedCaller {
         require(tokens.length == tokenIds.length, "NFTMarketplace: Wrong lengths");
         require(tokens.length == owners.length, "NFTMarketplace: Wrong lengths"); 
         require(tokens.length == prices.length, "NFTMarketplace: Wrong lengths");
@@ -247,7 +246,6 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, ERC1155Tok
     function cancelLot(uint lotId, address newRecipient) public onlyOwner {
         Lot storage localLot = lots[lotId];     
 
-        // require(localLot.owner == msg.sender, "NFTMarketplace: Not owner"); //??
         require(localLot.status == LotStatus.Active || localLot.status == LotStatus.Inactive, "NFTMatketplace: Lot cannot be canceled");
 
         address finalRecipient;
@@ -266,7 +264,7 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, ERC1155Tok
         emit CancelLot(lotId);
     }
 
-    function butchCancelLots(uint[] memory lotIds, address[] memory newRecipients) external onlyOwner {
+    function batchCancelLots(uint[] memory lotIds, address[] memory newRecipients) external onlyOwner {
         require(lotIds.length == newRecipients.length, "Wrong lengths");
         for (uint i; i < lotIds.length; i++) {
             cancelLot(lotIds[i], newRecipients[i]);
@@ -276,17 +274,15 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, ERC1155Tok
     function deactivateLot(uint lotId) public onlyOwner {
         Lot storage localLot = lots[lotId];     
 
-        // require(localLot.owner == msg.sender, "NFTMarketplace: Not owner"); //??
         require(localLot.status == LotStatus.Active, "NFTMatketplace: Lot cannot be deactivated");
 
         localLot.status = LotStatus.Inactive;
         activeLotCount--;
-        // EnumerableSet.remove(activeLots, lotId);
         emit DeactivateLot(lotId);
 
     }
 
-    function butchDeactivateLots(uint[] memory lotIds) external onlyOwner {
+    function batchDeactivateLots(uint[] memory lotIds) external onlyOwner {
         for (uint i; i < lotIds.length; i++) {
             deactivateLot(lotIds[i]);
         }
@@ -295,37 +291,32 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, ERC1155Tok
     function activateLot(uint lotId) public onlyOwner {
         Lot storage localLot = lots[lotId];     
 
-        // require(localLot.owner == msg.sender, "NFTMarketplace: Not owner"); //??
         require(localLot.status == LotStatus.Inactive, "NFTMatketplace: Lot cannot be activated");
 
         localLot.status = LotStatus.Inactive;
         activeLotCount++;
-        // EnumerableSet.add(activeLots, lotId);
         emit ActivateLot(lotId);
     }
 
-    function butchActivateLots(uint[] memory lotIds) external onlyOwner {
+    function batchActivateLots(uint[] memory lotIds) external onlyOwner {
         for (uint i; i < lotIds.length; i++) {
             activateLot(lotIds[i]);
         }
     }
     
-    function getActiveLots(
-        uint256 start,
-        uint256 count
-    )
+    function getActiveLots(uint256 start, uint256 count)
         external
         view
-        returns (Lot[] memory lotsData)
-    {
+        returns (Lot[] memory lotsData){
         uint end = EnumerableSet.length(activeLots);
-        if(start + count < end) end = start + count;
+        if(start + count < end) { end = start + count; }
 
         Lot memory lot; 
         uint idx;
-        for(uint i=start; i < end; i++ ){
+        lotsData = new Lot[](count);
+        for(uint i = start; i < end; i++){
             lot = lots[EnumerableSet.at(activeLots,i)];
-            lotsData[idx++]=lot;
+            lotsData[idx++] = lot;
         }   
 
     }
