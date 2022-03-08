@@ -69,7 +69,7 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
 
         for(uint i = 0; i < _allowedCallers.length; i++){
             require(_allowedCallers[i] != address(0), "NFTMarketplace: Zero allowedCaller address");
-            allowedCallers[_allowedCallers[i]]=true;
+            allowedCallers[_allowedCallers[i]] = true;
         }
         
         for (uint i = 0; i < _pools.length; i++) {
@@ -219,10 +219,7 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
         }
     }
     
-    function getActiveLots(uint256 start, uint256 count)
-        external
-        view
-        returns (Lot[] memory lotsData){
+    function getActiveLots(uint256 start, uint256 count) external view returns (Lot[] memory lotsData){
         uint end = EnumerableSet.length(activeLots);
         if(start + count < end) { end = start + count; }
 
@@ -233,11 +230,10 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
             lot = lots[EnumerableSet.at(activeLots,i)];
             lotsData[idx++] = lot;
         }   
-
     }
 
     function buySingleLot(uint lotId, Lot storage localLot) private {
-        require(localLot.price < msg.value, "NFTMarketplace: Not enought value");
+        require(localLot.price <= msg.value, "NFTMarketplace: Not enought value");
 
         IERC721(localLot.token).safeTransferFrom(address(this), msg.sender, localLot.tokenId);
         
@@ -258,8 +254,8 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
 
         require(amount > 0 && amount < localLot.totalSupply - localLot.sold, "NFTMarketplace: Not enough amount");
 
-        uint totalPrice = amount * localLot.price; // over???
-        require(totalPrice < msg.value, "NFTMarketplace: Not enought value");
+        uint totalPrice = amount * localLot.price;
+        require(totalPrice <= msg.value, "NFTMarketplace: Not enought value");
 
         IERC1155(localLot.token).safeTransferFrom(address(this), msg.sender, localLot.tokenId, amount, "0x0");
         
