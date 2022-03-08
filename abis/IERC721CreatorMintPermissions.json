@@ -1,0 +1,4 @@
+[
+  "function approveMint(address,address,uint256)",
+  "function supportsInterface(bytes4) view returns (bool)"
+]

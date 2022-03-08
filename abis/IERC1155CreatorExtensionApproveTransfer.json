@@ -1,0 +1,5 @@
+[
+  "function approveTransfer(address,address,uint256[],uint256[]) returns (bool)",
+  "function setApproveTransfer(address,bool)",
+  "function supportsInterface(bytes4) view returns (bool)"
+]

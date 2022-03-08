@@ -1,0 +1,4 @@
+[
+  "function supportsInterface(bytes4) view returns (bool)",
+  "function tokenURI(address,uint256) view returns (string)"
+]

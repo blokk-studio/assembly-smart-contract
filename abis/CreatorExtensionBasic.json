@@ -1,0 +1,18 @@
+[
+  "event AdminApproved(address indexed,address indexed)",
+  "event AdminRevoked(address indexed,address indexed)",
+  "event OwnershipTransferred(address indexed,address indexed)",
+  "function approveAdmin(address)",
+  "function getAdmins() view returns (address[])",
+  "function isAdmin(address) view returns (bool)",
+  "function owner() view returns (address)",
+  "function renounceOwnership()",
+  "function revokeAdmin(address)",
+  "function setBaseTokenURI(address,string,bool)",
+  "function setBaseTokenURI(address,string)",
+  "function setTokenURI(address,uint256,string)",
+  "function setTokenURI(address,uint256[],string[])",
+  "function setTokenURIPrefix(address,string)",
+  "function supportsInterface(bytes4) view returns (bool)",
+  "function transferOwnership(address)"
+]

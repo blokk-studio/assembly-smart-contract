@@ -1,0 +1,8 @@
+[
+  "function setBaseTokenURI(address,string,bool)",
+  "function setBaseTokenURI(address,string)",
+  "function setTokenURI(address,uint256,string)",
+  "function setTokenURI(address,uint256[],string[])",
+  "function setTokenURIPrefix(address,string)",
+  "function supportsInterface(bytes4) view returns (bool)"
+]

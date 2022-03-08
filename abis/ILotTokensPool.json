@@ -1,0 +1,4 @@
+[
+  "function balanceOf(address) view returns (uint256)",
+  "function lotToken() view returns (address)"
+]

@@ -1,0 +1,20 @@
+[
+  "constructor(address)",
+  "event AdminApproved(address indexed,address indexed)",
+  "event AdminRevoked(address indexed,address indexed)",
+  "event OwnershipTransferred(address indexed,address indexed)",
+  "function approveAdmin(address)",
+  "function approveTransfer(address,address,uint256[],uint256[]) view returns (bool)",
+  "function getAdmins() view returns (address[])",
+  "function isAdmin(address) view returns (bool)",
+  "function owner() view returns (address)",
+  "function renounceOwnership()",
+  "function revokeAdmin(address)",
+  "function setApproveEnabled(bool)",
+  "function setApproveTransfer(address,bool)",
+  "function setTokenURI(string)",
+  "function supportsInterface(bytes4) view returns (bool)",
+  "function testMintNew(address[],uint256[],string[])",
+  "function tokenURI(address,uint256) view returns (string)",
+  "function transferOwnership(address)"
+]
