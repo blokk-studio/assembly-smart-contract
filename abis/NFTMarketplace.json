@@ -1,5 +1,5 @@
 [
-  "constructor(address,address[],address[],bool)",
+  "constructor(address,address[])",
   "event ActivateLot(uint256 indexed)",
   "event CancelLot(uint256 indexed)",
   "event DeactivateLot(uint256 indexed)",
@@ -33,8 +33,6 @@
   "function rescue(address,address,uint256,bool,uint256)",
   "function supportsInterface(bytes4) view returns (bool)",
   "function tokenLots(address,uint256,uint256) view returns (uint256)",
-  "function tokensPool(uint256) view returns (address)",
   "function transferOwnership(address)",
-  "function updateIsTokenFromPool(bool)",
   "function updateRecipient(address)"
 ]
