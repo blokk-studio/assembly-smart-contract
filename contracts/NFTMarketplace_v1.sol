@@ -31,15 +31,18 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
         uint totalSupply; // 0 - erc721
         uint sold;
         address owner;
-        bool isMultiple; // true - erc1155, false - erc721
+        bool is1155; // true - erc1155, false - erc721
     }
 
     event NewLot(uint indexed lotId, uint indexed tokenId, address indexed token, address owner, uint totalSupply);
-    event SoldLot(uint indexed lotId, uint indexed tokenId, address indexed token, address buyer, uint amount, uint price);
+    event SellLot(uint indexed lotId, uint indexed tokenId, address indexed token, address buyer, uint amount, uint price);
     event CancelLot(uint indexed lotId);
     event DeactivateLot(uint indexed lotId);
     event ActivateLot(uint indexed lotId);
-    event RescueToken(address to, address token, uint tokenId, bool isMultiple, uint amount);
+    event CloseLot(uint indexed lotId);
+    event UpdateRecipient(address newRecipient);
+    event SetAllowedCaller(address caller, bool isAllowed);
+    event RescueToken(address to, address token, uint tokenId, bool is1155, uint amount);
  
     address public  recipient;
     uint public lastLotId;
@@ -66,7 +69,7 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
     }
 
     modifier onlyAllowedCaller {
-        require(allowedCallers[msg.sender], "HardStakingNFTAuctionCudstodial: Caller is not allowed");
+        require(allowedCallers[msg.sender], "NFTMarketplace: Caller is not allowed");
         _;
     }
 
@@ -91,11 +94,11 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
 
 
 
-    function createLot(address token, uint tokenId, address owner, uint price, bool isMultiple, uint amount) public onlyAllowedCaller returns (uint){
-        require(isAvailableToken(token), "NFTMarketplace: Token is not available");
-        require(!isLotExists(token, tokenId), "NFTMarketplace: Lot already exists");
+    function createLot(address token, uint tokenId, address owner, uint price, bool is1155, uint amount) public onlyAllowedCaller returns (uint){
+        require(isSupportedToken(token), "NFTMarketplace: Token is not available");
+        require(!doesLotExist(token, tokenId), "NFTMarketplace: Lot already exists");
 
-        if(isMultiple){
+        if(is1155){
             require(amount > 0, "NFTMarketplace: Amount must be greater than zero");
             IERC1155(token).safeTransferFrom(owner, address(this), tokenId, amount, "0x0");
         }else{
@@ -111,9 +114,9 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
         lots[lotId].owner = owner;
         lots[lotId].status = LotStatus.Active;
 
-        lots[lotId].isMultiple = isMultiple;
+        lots[lotId].is1155 = is1155;
 
-        if(isMultiple) lots[lotId].totalSupply = amount;
+        if(is1155) lots[lotId].totalSupply = amount;
 
         tokenLots[token][tokenId].push(lotId);
         EnumerableSet.add(activeLots, lotId);
@@ -124,46 +127,45 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
         return lotId;
     }
 
-    function batchCreateLots(address[] memory tokens, uint[] memory tokenIds, address[] memory owners, uint[] memory prices, bool[] memory isMultiples, uint[] memory amounts) external onlyAllowedCaller {
+    function batchCreateLots(address[] memory tokens, uint[] memory tokenIds, address[] memory owners, uint[] memory prices, bool[] memory is1155s, uint[] memory amounts) external onlyAllowedCaller {
         require(tokens.length == tokenIds.length, "NFTMarketplace: Wrong lengths");
         require(tokens.length == owners.length, "NFTMarketplace: Wrong lengths"); 
         require(tokens.length == prices.length, "NFTMarketplace: Wrong lengths");
-        require(tokens.length == isMultiples.length, "NFTMarketplace: Wrong lengths");
+        require(tokens.length == is1155s.length, "NFTMarketplace: Wrong lengths");
         require(tokens.length == amounts.length, "NFTMarketplace: Wrong lengths");
         for (uint i; i < tokenIds.length; i++) {
-            createLot(tokens[i], tokenIds[i], owners[i], prices[i], isMultiples[i], amounts[i]);
+            createLot(tokens[i], tokenIds[i], owners[i], prices[i], is1155s[i], amounts[i]);
         }
     }
 
     function buyLot(uint lotId, uint amount) public payable {
-        Lot storage localLot = lots[lotId];     
+        Lot memory localLot = lots[lotId];     
 
         require(localLot.status == LotStatus.Active, "NFTMarketplace: Lot is not active");
 
-        if(localLot.isMultiple){
-            buyMultipleLot(lotId, localLot, amount); 
+        if(localLot.is1155){
+            _buyMultipleLot(lotId, localLot, amount); 
         }else{
-            buySingleLot(lotId, localLot);
+            _buySingleLot(lotId, localLot);
         }
         
     }
 
     function cancelLot(uint lotId, address newRecipient) public onlyOwner {
-        Lot storage localLot = lots[lotId];     
+        Lot memory localLot = lots[lotId];     
 
         require(localLot.status == LotStatus.Active || (localLot.status == LotStatus.Inactive && localLot.lotStart != 0) , "NFTMatketplace: Lot cannot be canceled");
 
-        address finalRecipient = newRecipient;
-        if(newRecipient == address(0)) finalRecipient = localLot.owner; 
-
-        if(localLot.isMultiple){
+        address finalRecipient = newRecipient != address(0) ? newRecipient : localLot.owner;
+        
+        if(localLot.is1155){
             IERC1155(localLot.token).safeTransferFrom(address(this), finalRecipient, localLot.tokenId, localLot.totalSupply - localLot.sold, "0x0");          
         }else{
             IERC721(localLot.token).safeTransferFrom(address(this), finalRecipient, localLot.tokenId);
         }
 
-        localLot.status = LotStatus.Canceled;
-        localLot.lotEnd = block.timestamp;
+        lots[lotId].status = LotStatus.Canceled;
+        lots[lotId].lotEnd = block.timestamp;
         activeLotCount--;
         EnumerableSet.remove(activeLots, lotId);
         existingTokens[localLot.token][localLot.tokenId] = false;
@@ -178,11 +180,11 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
     } 
 
     function deactivateLot(uint lotId) public onlyOwner {
-        Lot storage localLot = lots[lotId];     
+        Lot memory localLot = lots[lotId];     
 
         require(localLot.status == LotStatus.Active, "NFTMatketplace: Lot cannot be deactivated");
 
-        localLot.status = LotStatus.Inactive;
+        lots[lotId].status = LotStatus.Inactive;
         activeLotCount--;
         EnumerableSet.remove(activeLots, lotId);
         emit DeactivateLot(lotId);
@@ -195,11 +197,11 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
     }
 
     function activateLot(uint lotId) public onlyOwner {
-        Lot storage localLot = lots[lotId];     
+        Lot memory localLot = lots[lotId];     
 
         require(localLot.status == LotStatus.Inactive && localLot.lotStart != 0, "NFTMatketplace: Lot cannot be activated");
 
-        localLot.status = LotStatus.Active;
+        lots[lotId].status = LotStatus.Active;
         activeLotCount++;
         EnumerableSet.add(activeLots, lotId);
         emit ActivateLot(lotId);
@@ -224,7 +226,15 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
         }   
     }
 
-    function buySingleLot(uint lotId, Lot storage localLot) private {
+    function isSupportedToken(address token) public view returns (bool){
+        return IERC165(token).supportsInterface(0x80ac58cd) || IERC165(token).supportsInterface(0xd9b67a26);
+    }
+
+    function doesLotExist(address token, uint tokenId) private view returns (bool) {
+        return existingTokens[token][tokenId];
+    }
+
+    function _buySingleLot(uint lotId, Lot memory localLot) private {
         require(localLot.price <= msg.value, "NFTMarketplace: Not enought value");
 
         IERC721(localLot.token).safeTransferFrom(address(this), msg.sender, localLot.tokenId);
@@ -234,15 +244,17 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
         // refund dust eth, if any
         if (msg.value > localLot.price) TransferHelper.safeTransferETH(msg.sender, msg.value - localLot.price);
 
-        localLot.status = LotStatus.Successful;
-        localLot.lotEnd = block.timestamp;
+        
+        lots[lotId].status = LotStatus.Successful;
+        lots[lotId].lotEnd = block.timestamp;
         activeLotCount--;
         EnumerableSet.remove(activeLots, lotId);
         existingTokens[localLot.token][localLot.tokenId] = false;
-        emit SoldLot(lotId, localLot.tokenId, localLot.token, msg.sender, 0, localLot.price);
+        emit SellLot(lotId, localLot.tokenId, localLot.token, msg.sender, 0, localLot.price);
+        emit CloseLot(lotId);
     }
 
-    function buyMultipleLot(uint lotId, Lot storage localLot, uint amount) private{
+    function _buyMultipleLot(uint lotId, Lot memory localLot, uint amount) private{
 
         require(amount > 0 && amount <= localLot.totalSupply - localLot.sold, "NFTMarketplace: Not enough amount");
 
@@ -256,56 +268,54 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
         // refund dust eth, if any
         if (msg.value > totalPrice) TransferHelper.safeTransferETH(msg.sender, msg.value - totalPrice);
     
-        localLot.sold += amount;
+        lots[lotId].sold += amount;
 
-        if(localLot.sold==localLot.totalSupply){
-            localLot.status = LotStatus.Successful;
-            localLot.lotEnd = block.timestamp;
+        if(localLot.sold + amount == localLot.totalSupply){
+            lots[lotId].status = LotStatus.Successful;
+            lots[lotId].lotEnd = block.timestamp;
             activeLotCount--;
             EnumerableSet.remove(activeLots, lotId);
             existingTokens[localLot.token][localLot.tokenId] = false;
+            emit CloseLot(lotId);
         }
 
-        emit SoldLot(lotId, localLot.tokenId, localLot.token, msg.sender, amount, localLot.price);
+        emit SellLot(lotId, localLot.tokenId, localLot.token, msg.sender, amount, localLot.price);
     }
 
-    function isAvailableToken(address token) public view returns (bool){
-        return IERC165(token).supportsInterface(0x80ac58cd) || IERC165(token).supportsInterface(0xd9b67a26);
-    }
 
-    function isLotExists(address token, uint tokenId) private view returns (bool) {
-        return existingTokens[token][tokenId];
-    }
 
     /* --- OWNER --- */
 
     function updateRecipient(address newRecipient) external onlyOwner {
         require(newRecipient != address(0), "NFTMarketplace: Address is zero");
         recipient = newRecipient;
+        emit UpdateRecipient(newRecipient);
     }
 
     function addAllowedCaller(address caller)  external onlyOwner {
         require(caller != address(0), "NFTMarketplace: Address is zero");
         require(!allowedCallers[caller], "NFTMarketplace: Already allowed");
         allowedCallers[caller] = true;
+        emit SetAllowedCaller(caller, true);
     }
 
     function removeAllowedCaller(address caller)  external onlyOwner {
         require(allowedCallers[caller], "NFTMarketplace: Already disallowed");
         allowedCallers[caller] = false;
+        emit SetAllowedCaller(caller, false);
     }
 
-    function rescue(address to, address token, uint tokenId, bool isMultiple, uint amount) external onlyOwner {
+    function rescue(address to, address token, uint tokenId, bool is1155, uint amount) external onlyOwner {
         require(to != address(0), "NFTMarketplace: Cannot rescue to the zero address");
         
-        if(isMultiple){
+        if(is1155){
             require(amount > 0, "NFTMarketplace: Cannot rescue 0");
             IERC1155(token).safeTransferFrom(address(this), to, tokenId, amount, "0x0");          
         }else{
             IERC721(token).safeTransferFrom(address(this), to, tokenId);
         }
 
-        emit RescueToken(to, token, tokenId, isMultiple, amount);
+        emit RescueToken(to, token, tokenId, is1155, amount);
     }
 
 }

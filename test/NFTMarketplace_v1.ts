@@ -239,7 +239,7 @@ describe("NFT_Marketplace_v1", function () {
 
       const txReciept = await tx.wait();
 
-      const events = txReciept.events!.filter((x) => x.event === "SoldLot");
+      const events = txReciept.events!.filter((x) => x.event === "SellLot");
 
       expect(events.length).to.be.equal(1);
       const event = events[0].args;
@@ -271,7 +271,7 @@ describe("NFT_Marketplace_v1", function () {
 
       const tx1Reciept = await tx1.wait();
 
-      events = tx1Reciept.events!.filter((x) => x.event === "SoldLot");
+      events = tx1Reciept.events!.filter((x) => x.event === "SellLot");
       expect(events.length).to.be.equal(1);
       event = events[0].args;
       expect(event!.lotId).to.be.equal(2);
@@ -291,7 +291,7 @@ describe("NFT_Marketplace_v1", function () {
         value: ethers.BigNumber.from(price).mul(secondAmount * 2),
       });
       const tx2Reciept = await tx2.wait();
-      events = tx2Reciept.events!.filter((x) => x.event === "SoldLot");
+      events = tx2Reciept.events!.filter((x) => x.event === "SellLot");
       expect(events.length).to.be.equal(1);
       event = events[0].args;
       expect(event!.lotId).to.be.equal(2);
@@ -522,10 +522,10 @@ describe("NFT_Marketplace_v1", function () {
     });
 
     it("is available token", async function () {
-      expect(await marketplace.isAvailableToken(erc721.address)).to.be.equal(
+      expect(await marketplace.isSupportedToken(erc721.address)).to.be.equal(
         true
       );
-      expect(await marketplace.isAvailableToken(erc1155.address)).to.be.equal(
+      expect(await marketplace.isSupportedToken(erc1155.address)).to.be.equal(
         true
       );
     });
