@@ -1,5 +1,5 @@
 [
-  "constructor(address,address[])",
+  "constructor(address,address[],address)",
   "event ActivateLot(uint256 indexed)",
   "event CancelLot(uint256 indexed)",
   "event CloseLot(uint256 indexed)",

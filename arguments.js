@@ -1,0 +1,6 @@
+// eslint-disable-next-line no-undef
+module.exports = [
+    "0x9F3f11d72d96910df008Cfe3aBA40F361D2EED03",
+    ["0x9F3f11d72d96910df008Cfe3aBA40F361D2EED03", "0x3854Ca47Abc62A3771fE06ab45622A42C4A438Cf"],
+    "0x3854Ca47Abc62A3771fE06ab45622A42C4A438Cf"
+];

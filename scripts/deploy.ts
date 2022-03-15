@@ -13,14 +13,13 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
-  const recipient = '';
-  const _allowedCallers: string[]= [];
-  const pools: string[] = [];
-  const _isTokenFromPool = false;
+  const recipient = "0x9F3f11d72d96910df008Cfe3aBA40F361D2EED03";
+  const _allowedCallers: string[]= ["0x9F3f11d72d96910df008Cfe3aBA40F361D2EED03", "0x3854Ca47Abc62A3771fE06ab45622A42C4A438Cf"];
+  const _owner = "0x3854Ca47Abc62A3771fE06ab45622A42C4A438Cf"
 
   // We get the contract to deploy
   const NFTMarketplace = await ethers.getContractFactory("NFTMarketplace");
-  const instance = await NFTMarketplace.deploy(recipient, _allowedCallers, pools, _isTokenFromPool);
+  const instance = await NFTMarketplace.deploy(recipient, _allowedCallers, _owner);
 
   await instance.deployed();
 
