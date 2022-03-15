@@ -56,7 +56,8 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
 
     constructor(
         address _recipient,
-        address[] memory _allowedCallers
+        address[] memory _allowedCallers,
+        address _owner
     ) {
         require(_recipient != address(0), "NFTMarketplace: Zero recipient address");
         recipient = _recipient;
@@ -65,7 +66,8 @@ contract NFTMarketplace is ReentrancyGuard, Ownable, IERC721Receiver, IERC1155Re
             require(_allowedCallers[i] != address(0), "NFTMarketplace: Zero allowedCaller address");
             allowedCallers[_allowedCallers[i]] = true;
         }
-        
+
+        _transferOwnership(_owner);
     }
 
     modifier onlyAllowedCaller {
