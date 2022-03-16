@@ -79,7 +79,11 @@ contract NFTMarketplace is
     mapping(address => mapping(uint256 => bool)) private existingTokens;
     EnumerableSet.UintSet private activeLots;
 
-    constructor(address _recipient, address[] memory _allowedCallers) payable {
+    constructor(
+        address _recipient,
+        address[] memory _allowedCallers,
+        address _owner
+    ) payable {
         require(
             _recipient != address(0),
             "NFTMarketplace: Zero recipient address"
@@ -97,6 +101,10 @@ contract NFTMarketplace is
             unchecked {
                 ++i;
             }
+        }
+
+        if (_owner != address(0)) {
+            _transferOwnership(_owner);
         }
     }
 
@@ -436,7 +444,7 @@ contract NFTMarketplace is
 
     ///@notice - buy lot with ERC721 token
     ///@param lotId - id of target lot
-    ///@param localLot - target lot structure 
+    ///@param localLot - target lot structure
     function _buySingleLot(uint256 lotId, Lot memory localLot) private {
         require(
             localLot.price <= msg.value,
@@ -482,7 +490,7 @@ contract NFTMarketplace is
 
     ///@notice - buy lot with ERC1155 token
     ///@param lotId - id of target lot
-    ///@param localLot - target lot structure 
+    ///@param localLot - target lot structure
     function _buyMultipleLot(
         uint256 lotId,
         Lot memory localLot,
