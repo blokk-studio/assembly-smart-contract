@@ -270,6 +270,7 @@ const config: HardhatUserConfig = {
     clear: true,
     flat: true,
     only: [],
+    except: ['IRoyalties'],
     spacing: 2,
     pretty: true,
   },

@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./utils/TransferHelper.sol";
-import "./manifold/core/IRoyalties.sol";
+import "./utils/IRoyalties.sol";
 
 contract NFTMarketplace is
     ReentrancyGuard,
@@ -255,7 +255,7 @@ contract NFTMarketplace is
     ///@notice Buy active lot
     ///@param lotId - id of target lot
     ///@param amount - amount for ERC1155 token
-    function buyLot(uint256 lotId, uint256 amount) public payable {
+    function buyLot(uint256 lotId, uint256 amount) public payable nonReentrant {
         Lot memory localLot = lots[lotId];
 
         require(
