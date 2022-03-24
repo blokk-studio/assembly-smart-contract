@@ -1,10 +1,11 @@
+///SPDX-License-Identifier: None
+
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/interfaces/IERC1155.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
 import "@openzeppelin/contracts/interfaces/IERC1155Receiver.sol";
 import "@openzeppelin/contracts/interfaces/IERC721Receiver.sol";
-import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -55,6 +56,7 @@ contract NFTMarketplace is
         uint256 amount,
         uint256 price
     );
+
     event CancelLot(uint256 indexed lotId);
     event DeactivateLot(uint256 indexed lotId);
     event ActivateLot(uint256 indexed lotId);
@@ -68,6 +70,26 @@ contract NFTMarketplace is
         bool is1155,
         uint256 amount
     );
+
+    ///@notice - return when one of parameters is zero address
+    error ZeroAddress();
+    ///@notice - only allowedCaller
+    error OnlyAllowedCaller();
+    ///@notice - token is not support ERC721 or ERC1155 interface
+    error InvalidToken();
+    ///@notice - lot with the same token and tokenID already exists.
+    error LotAlreadyExists();
+    ///@notice - array lengths do not match
+    error WrongArrayLength();
+    ///@notice - the lot has an incorrect status, so the operation cannot be performed.
+    /// records the actual status of the lot
+    error InvalidLotStatus(LotStatus actualStatus);
+    ///@notice - not enough eth
+    error InvalidValue();
+    ///@notice - amount equal to zero or less than the amount of tokens available in the lot
+    error InvalidAmount();
+    ///@notice - allowedCaller already added or removed
+    error AlreadySet();
 
     address public recipient;
     uint256 public lastLotId;
@@ -84,18 +106,17 @@ contract NFTMarketplace is
         address[] memory _allowedCallers,
         address _owner
     ) payable {
-        require(
-            _recipient != address(0),
-            "NFTMarketplace: Zero recipient address"
-        );
+        if (_recipient == address(0)) {
+            revert ZeroAddress();
+        }
         recipient = _recipient;
 
         uint256 length = _allowedCallers.length;
         for (uint256 i; i < length; ) {
-            require(
-                _allowedCallers[i] != address(0),
-                "NFTMarketplace: Zero allowedCaller address"
-            );
+            if (_allowedCallers[i] == address(0)) {
+                revert ZeroAddress();
+            }
+
             allowedCallers[_allowedCallers[i]] = true;
 
             unchecked {
@@ -109,10 +130,9 @@ contract NFTMarketplace is
     }
 
     modifier onlyAllowedCaller() {
-        require(
-            allowedCallers[msg.sender],
-            "NFTMarketplace: Caller is not allowed"
-        );
+        if (!allowedCallers[msg.sender]) {
+            revert OnlyAllowedCaller();
+        }
         _;
     }
 
@@ -123,7 +143,9 @@ contract NFTMarketplace is
         override(IERC165)
         returns (bool)
     {
-        return interfaceId == type(IERC1155Receiver).interfaceId;
+        return
+            interfaceId == type(IERC1155Receiver).interfaceId ||
+            interfaceId == type(IERC165).interfaceId;
     }
 
     function onERC1155Received(
@@ -133,7 +155,7 @@ contract NFTMarketplace is
         uint256 _value,
         bytes calldata _data
     ) external pure override returns (bytes4) {
-        // return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
+        // return bytes4(keccak256("onERC1155Received(address,address,uint,uint,bytes)"));
         return 0xf23a6e61;
     }
 
@@ -144,7 +166,7 @@ contract NFTMarketplace is
         uint256[] calldata _values,
         bytes calldata _data
     ) external pure override returns (bytes4) {
-        // return bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"));
+        // return bytes4(keccak256("onERC1155BatchReceived(address,address,uint[],uint[],bytes)"));
         return 0xbc197c81;
     }
 
@@ -154,7 +176,7 @@ contract NFTMarketplace is
         uint256 tokenId,
         bytes calldata data
     ) external pure override returns (bytes4) {
-        // return bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
+        // return bytes4(keccak256("onERC721Received(address,address,uint,bytes)"));
         return 0x150b7a02;
     }
 
@@ -175,20 +197,17 @@ contract NFTMarketplace is
         bool is1155,
         uint256 amount
     ) public onlyAllowedCaller returns (uint256) {
-        require(
-            isSupportedToken(token),
-            "NFTMarketplace: Token is not available"
-        );
-        require(
-            !doesLotExist(token, tokenId),
-            "NFTMarketplace: Lot already exists"
-        );
+        if (!isSupportedToken(token)) {
+            revert InvalidToken();
+        }
+        if (doesLotExist(token, tokenId)) {
+            revert LotAlreadyExists();
+        }
 
         if (is1155) {
-            require(
-                amount != 0,
-                "NFTMarketplace: Amount must be greater than zero"
-            );
+            if (amount == 0) {
+                revert InvalidAmount();
+            }
             IERC1155(token).safeTransferFrom(
                 owner,
                 address(this),
@@ -238,11 +257,15 @@ contract NFTMarketplace is
         uint256[] calldata amounts
     ) external onlyAllowedCaller {
         uint256 length = tokens.length;
-        require(length == tokenIds.length, "NFTMarketplace: Wrong lengths");
-        require(length == owners.length, "NFTMarketplace: Wrong lengths");
-        require(length == prices.length, "NFTMarketplace: Wrong lengths");
-        require(length == is1155s.length, "NFTMarketplace: Wrong lengths");
-        require(length == amounts.length, "NFTMarketplace: Wrong lengths");
+        if (
+            length != tokenIds.length ||
+            length != owners.length ||
+            length != prices.length ||
+            length != is1155s.length ||
+            length != amounts.length
+        ) {
+            revert WrongArrayLength();
+        }
 
         for (uint256 i; i < length; ) {
             createLot(
@@ -266,10 +289,9 @@ contract NFTMarketplace is
     function buyLot(uint256 lotId, uint256 amount) public payable nonReentrant {
         Lot memory localLot = lots[lotId];
 
-        require(
-            localLot.status == LotStatus.Active,
-            "NFTMarketplace: Lot is not active"
-        );
+        if (localLot.status != LotStatus.Active) {
+            revert InvalidLotStatus(localLot.status);
+        }
 
         if (localLot.is1155) {
             _buyMultipleLot(lotId, localLot, amount);
@@ -285,12 +307,12 @@ contract NFTMarketplace is
     function cancelLot(uint256 lotId, address newRecipient) public onlyOwner {
         Lot memory localLot = lots[lotId];
 
-        require(
-            localLot.status == LotStatus.Active ||
-                (localLot.status == LotStatus.Inactive &&
-                    localLot.lotStart != 0),
-            "NFTMatketplace: Lot cannot be canceled"
-        );
+        if (
+            localLot.status != LotStatus.Active &&
+            !(localLot.status == LotStatus.Inactive && localLot.lotStart != 0)
+        ) {
+            revert InvalidLotStatus(localLot.status);
+        }
 
         address finalRecipient = newRecipient != address(0)
             ? newRecipient
@@ -328,7 +350,10 @@ contract NFTMarketplace is
         address[] calldata newRecipients
     ) external onlyOwner {
         uint256 length = lotIds.length;
-        require(length == newRecipients.length, "Wrong lengths");
+        if (length != newRecipients.length) {
+            revert WrongArrayLength();
+        }
+
         for (uint256 i; i < length; ) {
             cancelLot(lotIds[i], newRecipients[i]);
 
@@ -343,10 +368,9 @@ contract NFTMarketplace is
     function deactivateLot(uint256 lotId) public onlyOwner {
         Lot memory localLot = lots[lotId];
 
-        require(
-            localLot.status == LotStatus.Active,
-            "NFTMatketplace: Lot cannot be deactivated"
-        );
+        if (localLot.status != LotStatus.Active) {
+            revert InvalidLotStatus(localLot.status);
+        }
 
         lots[lotId].status = LotStatus.Inactive;
         activeLotCount--;
@@ -372,10 +396,9 @@ contract NFTMarketplace is
     function activateLot(uint256 lotId) public onlyOwner {
         Lot memory localLot = lots[lotId];
 
-        require(
-            localLot.status == LotStatus.Inactive && localLot.lotStart != 0,
-            "NFTMatketplace: Lot cannot be activated"
-        );
+        if (localLot.status != LotStatus.Inactive && localLot.lotStart != 0) {
+            revert InvalidLotStatus(localLot.status);
+        }
 
         lots[lotId].status = LotStatus.Active;
         activeLotCount++;
@@ -446,10 +469,9 @@ contract NFTMarketplace is
     ///@param lotId - id of target lot
     ///@param localLot - target lot structure
     function _buySingleLot(uint256 lotId, Lot memory localLot) private {
-        require(
-            localLot.price <= msg.value,
-            "NFTMarketplace: Not enought value"
-        );
+        if (localLot.price > msg.value) {
+            revert InvalidValue();
+        }
 
         IERC721(localLot.token).safeTransferFrom(
             address(this),
@@ -496,13 +518,14 @@ contract NFTMarketplace is
         Lot memory localLot,
         uint256 amount
     ) private {
-        require(
-            amount != 0 && amount <= localLot.totalSupply - localLot.sold,
-            "NFTMarketplace: Not enough amount"
-        );
+        if (amount == 0 || amount > localLot.totalSupply - localLot.sold) {
+            revert InvalidAmount();
+        }
 
         uint256 totalPrice = amount * localLot.price;
-        require(totalPrice <= msg.value, "NFTMarketplace: Not enought value");
+        if (totalPrice > msg.value) {
+            revert InvalidValue();
+        }
 
         IERC1155(localLot.token).safeTransferFrom(
             address(this),
@@ -601,7 +624,9 @@ contract NFTMarketplace is
     ///@notice - set new marketplace recipient address
     ///@param newRecipient - recipient address
     function updateRecipient(address newRecipient) external onlyOwner {
-        require(newRecipient != address(0), "NFTMarketplace: Address is zero");
+        if (newRecipient == address(0)) {
+            revert ZeroAddress();
+        }
         recipient = newRecipient;
         emit UpdateRecipient(newRecipient);
     }
@@ -609,8 +634,12 @@ contract NFTMarketplace is
     ///@notice - adding a new allowedCaller
     ///@param caller - allowedCaller address
     function addAllowedCaller(address caller) external onlyOwner {
-        require(caller != address(0), "NFTMarketplace: Address is zero");
-        require(!allowedCallers[caller], "NFTMarketplace: Already allowed");
+        if (caller == address(0)) {
+            revert ZeroAddress();
+        }
+        if (allowedCallers[caller]) {
+            revert AlreadySet();
+        }
         allowedCallers[caller] = true;
         emit SetAllowedCaller(caller, true);
     }
@@ -618,7 +647,9 @@ contract NFTMarketplace is
     ///@notice - removing allowedCaller
     ///@param caller - allowedCaller address
     function removeAllowedCaller(address caller) external onlyOwner {
-        require(allowedCallers[caller], "NFTMarketplace: Already disallowed");
+        if (!allowedCallers[caller]) {
+            revert AlreadySet();
+        }
         allowedCallers[caller] = false;
         emit SetAllowedCaller(caller, false);
     }
@@ -638,13 +669,14 @@ contract NFTMarketplace is
         bool is1155,
         uint256 amount
     ) external onlyOwner {
-        require(
-            to != address(0),
-            "NFTMarketplace: Cannot rescue to the zero address"
-        );
+        if (to == address(0)) {
+            revert ZeroAddress();
+        }
 
         if (is1155) {
-            require(amount != 0, "NFTMarketplace: Cannot rescue 0");
+            if (amount == 0) {
+                revert InvalidAmount();
+            }
             IERC1155(token).safeTransferFrom(
                 address(this),
                 to,
