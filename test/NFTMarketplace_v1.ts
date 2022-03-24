@@ -6,6 +6,7 @@ import {
 } from "../typechain-types";
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { BigNumber } from "ethers";
 
 describe("NFT_Marketplace_v1", function () {
   let marketplace: NFTMarketplace;
@@ -34,10 +35,83 @@ describe("NFT_Marketplace_v1", function () {
 
     const Marketplace = await ethers.getContractFactory("NFTMarketplace");
 
-    marketplace = await Marketplace.deploy(recipient.address, [
-      allowedCaller.address,
-    ]);
+    marketplace = await Marketplace.deploy(
+      recipient.address,
+      [allowedCaller.address],
+      "0x0000000000000000000000000000000000000000"
+    );
   });
+
+  it("constructor", async function(){
+    const Marketplace = await ethers.getContractFactory("NFTMarketplace");
+
+    await expect( Marketplace.deploy(
+      "0x0000000000000000000000000000000000000000",
+      [allowedCaller.address],
+      "0x0000000000000000000000000000000000000000"
+    )).to.be.revertedWith("ZeroAddress()");
+
+    await expect( Marketplace.deploy(
+      recipient.address,
+      ["0x0000000000000000000000000000000000000000"],
+      "0x0000000000000000000000000000000000000000"
+    )).to.be.revertedWith('ZeroAddress()');
+
+    let tmpMarketplace = await Marketplace.deploy(
+      recipient.address,
+      [allowedCaller.address],
+      "0x0000000000000000000000000000000000000000"
+    );
+
+    expect(await tmpMarketplace.owner()).to.be.equal(owner.address);
+
+    tmpMarketplace = await Marketplace.deploy(
+      recipient.address,
+      [allowedCaller.address],
+      allowedCaller.address
+    );
+
+    expect(await tmpMarketplace.owner()).to.be.equal(allowedCaller.address);
+
+  })
+
+  it("permissions", async function(){
+    await expect( marketplace.createLot(erc721.address, 1, artist1.address, 100, false, 0)).to.be.revertedWith('OnlyAllowedCaller()');
+    await expect( marketplace.batchCreateLots([erc721.address], [1], [artist1.address], [100], [false], [0])).to.be.revertedWith('OnlyAllowedCaller()');
+  
+    await expect(marketplace.connect(allowedCaller).cancelLot(1,artist1.address)).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(marketplace.connect(allowedCaller).batchCancelLots([1], [artist1.address])).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(marketplace.connect(allowedCaller).deactivateLot(1)).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(marketplace.connect(allowedCaller).batchDeactivateLots([1])).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(marketplace.connect(allowedCaller).activateLot(1)).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(marketplace.connect(allowedCaller).batchActivateLots([1])).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(marketplace.connect(allowedCaller).updateRecipient(recipient.address)).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(marketplace.connect(allowedCaller).addAllowedCaller(owner.address)).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(marketplace.connect(allowedCaller).removeAllowedCaller(owner.address)).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(marketplace.connect(allowedCaller).rescue(owner.address, erc721.address, 1, false, 0)).to.be.revertedWith("Ownable: caller is not the owner");
+  })
+
+  it("supports interface", async function(){
+    expect(await marketplace.supportsInterface('0x4e2312e0')).to.be.equal(true);
+    expect(await marketplace.supportsInterface('0x01ffc9a7')).to.be.equal(true);
+    expect(await marketplace.supportsInterface('0x80ac58cd')).to.be.equal(false);
+  })
+
+  it("received functions", async function(){
+    expect(await marketplace.onERC1155Received(erc1155.address, artist1.address, 1, 2, '0x00')).to.be.equal('0xf23a6e61');
+    expect(await marketplace.onERC1155BatchReceived(erc1155.address, artist1.address, [1], [2], '0x00')).to.be.equal('0xbc197c81');
+    expect(await marketplace.onERC721Received(erc721.address, artist1.address, 1, '0x00')).to.be.equal('0x150b7a02');
+  })
+
+  it('support token', async function(){
+    const ERC20 = await ethers.getContractFactory("ERC20");
+    const erc20 = await ERC20.deploy("Test", "ERC");
+    const Mock = await ethers.getContractFactory("MockToken");
+    const mock = await Mock.deploy();
+
+    await expect(marketplace.connect(allowedCaller).createLot(erc20.address, 1, artist1.address, 1000, false, 0)).to.be.revertedWith("function selector was not recognized and there's no fallback function")
+    await expect(marketplace.connect(allowedCaller).createLot(mock.address, 1, artist1.address, 1000, false, 0)).to.be.revertedWith('InvalidToken()')
+  })
 
   describe("create lot", function () {
     beforeEach(async () => {
@@ -72,7 +146,7 @@ describe("NFT_Marketplace_v1", function () {
         marketplace
           .connect(allowedCaller)
           .createLot(erc1155.address, 1, artist1.address, price, true, 0)
-      ).to.be.revertedWith("NFTMarketplace: Amount must be greater than zero");
+      ).to.be.revertedWith("InvalidAmount()");
     });
 
     it("success single lot", async function () {
@@ -133,6 +207,22 @@ describe("NFT_Marketplace_v1", function () {
       expect(activeLots[0].tokenId).to.be.equal(1);
     });
 
+    it("reject batch create with wrong lengths", async function(){
+      await erc721
+        .connect(artist1)
+        .setApprovalForAll(marketplace.address, true);
+      await erc1155.mintBaseNew([artist1.address], [100], ["0x0"]);
+      await erc1155
+        .connect(artist1)
+        .setApprovalForAll(marketplace.address, true);
+
+        
+      await  expect( marketplace
+      .connect(allowedCaller)
+      .batchCreateLots([erc721.address, erc1155.address], [1,1], [artist1.address], [100,100], [false, true], [0,10])
+      ).to.be.revertedWith('WrongArrayLength()')
+    })
+
     it("success batch create", async function () {
       await erc721
         .connect(artist1)
@@ -186,7 +276,7 @@ describe("NFT_Marketplace_v1", function () {
         marketplace
           .connect(allowedCaller)
           .createLot(erc721.address, 1, artist1.address, price, false, 0)
-      ).to.be.revertedWith("NFTMarketplace: Lot already exists");
+      ).to.be.revertedWith("LotAlreadyExists()");
     });
   });
 
@@ -206,12 +296,17 @@ describe("NFT_Marketplace_v1", function () {
       await marketplace
         .connect(allowedCaller)
         .createLot(erc1155.address, 1, artist1.address, price, true, 25);
+
+      await erc721["setRoyalties(address[],uint256[])"](
+        [artist1.address, artist2.address],
+        [5000, 2000]
+      );
     });
 
     it("reject when trying to buy a non-existent lot", async function () {
       let lastLotId = (await marketplace.lastLotId()).toNumber();
       await expect(marketplace.buyLot(++lastLotId, 0)).to.be.revertedWith(
-        "NFTMarketplace: Lot is not active"
+        "InvalidLotStatus(0)"
       );
     });
 
@@ -219,23 +314,90 @@ describe("NFT_Marketplace_v1", function () {
       await marketplace.deactivateLot(1);
 
       await expect(marketplace.buyLot(1, 0)).to.be.revertedWith(
-        "NFTMarketplace: Lot is not active"
+        "InvalidLotStatus(0)"
       );
     });
 
     it("reject when is not enough value", async function () {
-      const lot = await marketplace.lots(1);
+      let lot = await marketplace.lots(1);
       await expect(
         marketplace.buyLot(1, 0, {
           value: ethers.BigNumber.from(lot.price).sub(100),
         })
-      ).to.be.revertedWith("NFTMarketplace: Not enought value");
+      ).to.be.revertedWith("InvalidValue()");
+
+      lot = await marketplace.lots(2);
+      await expect(
+        marketplace.buyLot(2, 5, {
+          value: ethers.BigNumber.from(lot.price).sub(100),
+        })
+      ).to.be.revertedWith("InvalidValue()");
     });
 
-    it("success erc721", async function () {
+    it("reject when invalid amount", async function () {
+      const lot = await marketplace.lots(2);
+      await expect(
+        marketplace.buyLot(2, 0, {
+          value: ethers.BigNumber.from(lot.price),
+        })
+      ).to.be.revertedWith("InvalidAmount()");
+
+      await marketplace.buyLot(2, 5, {
+        value: ethers.BigNumber.from(lot.price).mul(5),
+      });
+
+      await expect(
+        marketplace.buyLot(2, 21, {
+          value: ethers.BigNumber.from(lot.price).mul(21),
+        })
+      ).to.be.revertedWith("InvalidAmount()");
+    });
+
+    it("success erc721 and check royalties", async function () {
+      const balances =[];
+      balances[0]=await artist1.getBalance();
+      balances[1]=await artist2.getBalance();
+      balances[2]=await buyer.getBalance();
+      balances[3]=await recipient.getBalance();
+
       const tx = await marketplace
         .connect(buyer)
         .buyLot(1, 0, { value: price });
+
+      const txReciept = await tx.wait();
+      
+      const events = txReciept.events!.filter((x) => x.event === "SellLot");
+
+      expect(events.length).to.be.equal(1);
+      const event = events[0].args;
+      expect(event!.lotId).to.be.equal(1);
+      expect(event!.tokenId).to.be.equal(1);
+      expect(event!.token).to.be.equal(erc721.address);
+      expect(event!.buyer).to.be.equal(buyer.address);
+      expect(event!.amount).to.be.equal(0);
+      expect(event!.price).to.be.equal(price);
+
+      const lot = await marketplace.lots(1);
+      expect(lot.status).to.be.equal(2);
+      expect(await erc721.ownerOf(1)).to.be.equal(buyer.address);
+
+      expect(await marketplace.activeLotCount()).to.be.equal(1);
+      const activeLots = await marketplace.getActiveLots(0, 1);
+      expect(activeLots[0].token).to.be.equal(erc1155.address);
+      expect(activeLots[0].tokenId).to.be.equal(1);
+
+      const txPrice = txReciept.effectiveGasPrice.mul(txReciept.cumulativeGasUsed);
+
+      expect(await artist1.getBalance()).to.be.equal(balances[0].add(lot.price.mul(50).div(100)));
+      expect(await artist2.getBalance()).to.be.equal(balances[1].add(lot.price.mul(20).div(100)));
+      expect(await buyer.getBalance()).to.be.equal(balances[2].sub(txPrice.add(price)));
+      expect(await recipient.getBalance()).to.be.equal(balances[3].add(lot.price.mul(30).div(100)));
+    });
+
+    it("success erc721 with dust", async function () {
+      const tx = await marketplace
+        .connect(buyer)
+        .buyLot(1, 0, { value: BigNumber.from(price).add(1000) });
 
       const txReciept = await tx.wait();
 
@@ -258,6 +420,7 @@ describe("NFT_Marketplace_v1", function () {
       const activeLots = await marketplace.getActiveLots(0, 1);
       expect(activeLots[0].token).to.be.equal(erc1155.address);
       expect(activeLots[0].tokenId).to.be.equal(1);
+
     });
 
     it("success erc1155", async function () {
@@ -336,7 +499,7 @@ describe("NFT_Marketplace_v1", function () {
       let lastLotId = (await marketplace.lastLotId()).toNumber();
       await expect(
         marketplace.cancelLot(++lastLotId, artist2.address)
-      ).to.be.revertedWith("NFTMatketplace: Lot cannot be canceled");
+      ).to.be.revertedWith("InvalidLotStatus(0)");
     });
 
     it("sucess single", async function () {
@@ -363,6 +526,20 @@ describe("NFT_Marketplace_v1", function () {
 
       expect(lot.status).to.be.equal(3);
       expect(await erc1155.balanceOf(artist2.address, 1)).to.be.equal(25);
+    });
+
+    it("reject invalid batch length", async function () {
+      await marketplace
+        .connect(allowedCaller)
+        .createLot(erc721.address, 2, artist1.address, price, false, 0);
+
+      await expect( marketplace.batchCancelLots(
+        [1, 2, 3],
+        [
+          artist2.address,
+          artist2.address,
+        ]
+      )).to.be.revertedWith("WrongArrayLength()")
     });
 
     it("success batch", async function () {
@@ -405,7 +582,7 @@ describe("NFT_Marketplace_v1", function () {
       await marketplace.cancelLot(1, artist2.address);
       await expect(
         marketplace.cancelLot(1, artist2.address)
-      ).to.be.revertedWith("NFTMatketplace: Lot cannot be canceled");
+      ).to.be.revertedWith("InvalidLotStatus(3)");
     });
   });
 
@@ -432,12 +609,12 @@ describe("NFT_Marketplace_v1", function () {
       await marketplace.connect(buyer).buyLot(1, 0, { value: price });
       await expect(
         marketplace.connect(owner).deactivateLot(1)
-      ).to.be.revertedWith("NFTMatketplace: Lot cannot be deactivated");
+      ).to.be.revertedWith("InvalidLotStatus(2)");
     });
 
     it("reject activate when status is not inactive", async function () {
       await expect(marketplace.activateLot(1)).to.be.revertedWith(
-        "NFTMatketplace: Lot cannot be activated"
+        "InvalidLotStatus(1)"
       );
     });
 
@@ -496,7 +673,7 @@ describe("NFT_Marketplace_v1", function () {
         marketplace.updateRecipient(
           "0x0000000000000000000000000000000000000000"
         )
-      ).to.be.revertedWith("NFTMarketplace: Address is zero");
+      ).to.be.revertedWith("ZeroAddress()");
 
       await marketplace.updateRecipient(artist2.address);
       expect(await marketplace.recipient()).to.be.equal(artist2.address);
@@ -506,15 +683,21 @@ describe("NFT_Marketplace_v1", function () {
       expect(
         await marketplace.allowedCallers(allowedCaller.address)
       ).to.be.equal(true);
+      await expect(
+        marketplace.addAllowedCaller(allowedCaller.address)
+      ).to.be.revertedWith("AlreadySet()");
       await marketplace.removeAllowedCaller(allowedCaller.address);
       expect(
         await marketplace.allowedCallers(allowedCaller.address)
       ).to.be.equal(false);
       await expect(
+        marketplace.removeAllowedCaller(allowedCaller.address)
+      ).to.be.revertedWith("AlreadySet()");
+      await expect(
         marketplace.addAllowedCaller(
           "0x0000000000000000000000000000000000000000"
         )
-      ).to.be.revertedWith("NFTMarketplace: Address is zero");
+      ).to.be.revertedWith("ZeroAddress()");
       await marketplace.addAllowedCaller(allowedCaller.address);
       expect(
         await marketplace.allowedCallers(allowedCaller.address)
@@ -545,12 +728,119 @@ describe("NFT_Marketplace_v1", function () {
         new Array(5).fill(0)
       );
 
-    const activeLots = await marketplace.getActiveLots(2, 6);
+    let activeLots = await marketplace.getActiveLots(2, 6);
 
     expect(activeLots.length).to.be.equal(6);
     expect(activeLots.filter((x: any) => !x.lotStart.eq(0)).length).to.be.equal(
       3
     );
     expect(activeLots.filter((x) => x.lotStart.eq(0)).length).to.be.equal(3);
+
+    activeLots = await marketplace.getActiveLots(0,2);
+    expect(activeLots.length).to.be.equal(2);
+  });
+
+  describe("rescue", function () {
+    beforeEach(async () => {
+      await erc721["mintBaseBatch(address,uint16)"](artist1.address, 100);
+      await erc1155.mintBaseNew([artist1.address], [100], ["0x0"]);
+
+      await erc721
+        .connect(artist1)
+        .transferFrom(artist1.address, marketplace.address, 1);
+      await erc1155
+        .connect(artist1)
+        .safeTransferFrom(artist1.address, marketplace.address, 1, 10, "0x00");
+    });
+
+    it("reject with 0 address", async function () {
+      await expect(
+        marketplace.rescue(
+          "0x0000000000000000000000000000000000000000",
+          erc721.address,
+          1,
+          false,
+          0
+        )
+      ).to.be.revertedWith("ZeroAddress()");
+
+      await expect(
+        marketplace.rescue(
+          "0x0000000000000000000000000000000000000000",
+          erc1155.address,
+          1,
+          true,
+          10
+        )
+      ).to.be.revertedWith("ZeroAddress()");
+    });
+
+    it("reject with invalid amount", async function () {
+      await expect(
+        marketplace.rescue(artist2.address, erc1155.address, 1, true, 0)
+      ).to.be.revertedWith("InvalidAmount()");
+    });
+
+    it("reject with non exists token", async function () {
+      await expect(
+        marketplace.rescue(
+          "0x0000000000000000000000000000000000000000",
+          erc721.address,
+          2,
+          false,
+          0
+        )
+      ).to.be.revertedWith("ZeroAddress()");
+    });
+
+    it("success", async function () {
+      let tx, reciept, events, event;
+
+      expect(await erc721.ownerOf(1)).to.be.equal(marketplace.address);
+      expect(await erc1155.balanceOf(marketplace.address, 1)).to.be.equal(10);
+
+      tx = await marketplace.rescue(
+        artist2.address,
+        erc721.address,
+        1,
+        false,
+        0
+      );
+      reciept = await tx.wait();
+      events = reciept.events!.filter((x) => x.event === "RescueToken");
+
+      expect(events.length).to.be.equal(1);
+      event = events[0].args;
+      expect(event!.to).to.be.equal(artist2.address);
+      expect(event!.tokenId).to.be.equal(1);
+      expect(event!.token).to.be.equal(erc721.address);
+      expect(event!.is1155).to.be.equal(false);
+      expect(event!.amount).to.be.equal(0);
+
+      expect(await erc721.ownerOf(1)).to.be.equal(artist2.address);
+
+      tx = await marketplace.rescue(
+        artist2.address,
+        erc1155.address,
+        1,
+        true,
+        5
+      );
+      reciept = await tx.wait();
+
+      events = reciept.events!.filter((x) => x.event === "RescueToken");
+
+      expect(events.length).to.be.equal(1);
+      event = events[0].args;
+      expect(event!.to).to.be.equal(artist2.address);
+      expect(event!.tokenId).to.be.equal(1);
+      expect(event!.token).to.be.equal(erc1155.address);
+      expect(event!.is1155).to.be.equal(true);
+      expect(event!.amount).to.be.equal(5);
+
+      expect(await erc1155.balanceOf(artist2.address, 1)).to.be.equal(5);
+
+      expect(await erc1155.balanceOf(marketplace.address, 1)).to.be.equal(5);
+    });
   });
 });
