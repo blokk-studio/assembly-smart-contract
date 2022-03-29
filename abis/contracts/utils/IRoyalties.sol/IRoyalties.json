@@ -1,0 +1,3 @@
+[
+  "function getRoyalties(uint256) view returns (address[], uint256[])"
+]

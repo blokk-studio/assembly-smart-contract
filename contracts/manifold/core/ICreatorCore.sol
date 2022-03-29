@@ -10,15 +10,41 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
  * @dev Core creator interface
  */
 interface ICreatorCore is IERC165 {
-
-    event ExtensionRegistered(address indexed extension, address indexed sender);
-    event ExtensionUnregistered(address indexed extension, address indexed sender);
-    event ExtensionBlacklisted(address indexed extension, address indexed sender);
-    event MintPermissionsUpdated(address indexed extension, address indexed permissions, address indexed sender);
-    event RoyaltiesUpdated(uint256 indexed tokenId, address payable[] receivers, uint256[] basisPoints);
-    event DefaultRoyaltiesUpdated(address payable[] receivers, uint256[] basisPoints);
-    event ExtensionRoyaltiesUpdated(address indexed extension, address payable[] receivers, uint256[] basisPoints);
-    event ExtensionApproveTransferUpdated(address indexed extension, bool enabled);
+    event ExtensionRegistered(
+        address indexed extension,
+        address indexed sender
+    );
+    event ExtensionUnregistered(
+        address indexed extension,
+        address indexed sender
+    );
+    event ExtensionBlacklisted(
+        address indexed extension,
+        address indexed sender
+    );
+    event MintPermissionsUpdated(
+        address indexed extension,
+        address indexed permissions,
+        address indexed sender
+    );
+    event RoyaltiesUpdated(
+        uint256 indexed tokenId,
+        address payable[] receivers,
+        uint256[] basisPoints
+    );
+    event DefaultRoyaltiesUpdated(
+        address payable[] receivers,
+        uint256[] basisPoints
+    );
+    event ExtensionRoyaltiesUpdated(
+        address indexed extension,
+        address payable[] receivers,
+        uint256[] basisPoints
+    );
+    event ExtensionApproveTransferUpdated(
+        address indexed extension,
+        bool enabled
+    );
 
     /**
      * @dev gets address of all extensions
@@ -30,14 +56,19 @@ interface ICreatorCore is IERC165 {
      * extension address must point to a contract implementing ICreatorExtension.
      * Returns True if newly added, False if already added.
      */
-    function registerExtension(address extension, string calldata baseURI) external;
+    function registerExtension(address extension, string calldata baseURI)
+        external;
 
     /**
      * @dev add an extension.  Can only be called by contract owner or admin.
      * extension address must point to a contract implementing ICreatorExtension.
      * Returns True if newly added, False if already added.
      */
-    function registerExtension(address extension, string calldata baseURI, bool baseURIIdentical) external;
+    function registerExtension(
+        address extension,
+        string calldata baseURI,
+        bool baseURIIdentical
+    ) external;
 
     /**
      * @dev add an extension.  Can only be called by contract owner or admin.
@@ -62,7 +93,8 @@ interface ICreatorCore is IERC165 {
      * @dev set the baseTokenURI of an extension.  Can only be called by extension.
      * For tokens with no uri configured, tokenURI will return "uri+tokenId"
      */
-    function setBaseTokenURIExtension(string calldata uri, bool identical) external;
+    function setBaseTokenURIExtension(string calldata uri, bool identical)
+        external;
 
     /**
      * @dev set the common prefix of an extension.  Can only be called by extension.
@@ -74,12 +106,16 @@ interface ICreatorCore is IERC165 {
     /**
      * @dev set the tokenURI of a token extension.  Can only be called by extension that minted token.
      */
-    function setTokenURIExtension(uint256 tokenId, string calldata uri) external;
+    function setTokenURIExtension(uint256 tokenId, string calldata uri)
+        external;
 
     /**
      * @dev set the tokenURI of a token extension for multiple tokens.  Can only be called by extension that minted token.
      */
-    function setTokenURIExtension(uint256[] memory tokenId, string[] calldata uri) external;
+    function setTokenURIExtension(
+        uint256[] memory tokenId,
+        string[] calldata uri
+    ) external;
 
     /**
      * @dev set the baseTokenURI for tokens with no extension.  Can only be called by owner/admin.
@@ -102,12 +138,14 @@ interface ICreatorCore is IERC165 {
     /**
      * @dev set the tokenURI of multiple tokens with no extension.  Can only be called by owner/admin.
      */
-    function setTokenURI(uint256[] memory tokenIds, string[] calldata uris) external;
+    function setTokenURI(uint256[] memory tokenIds, string[] calldata uris)
+        external;
 
     /**
      * @dev set a permissions contract for an extension.  Used to control minting.
      */
-    function setMintPermissions(address extension, address permissions) external;
+    function setMintPermissions(address extension, address permissions)
+        external;
 
     /**
      * @dev Configure so transfers of tokens created by the caller (must be extension) gets approval
@@ -123,27 +161,55 @@ interface ICreatorCore is IERC165 {
     /**
      * @dev Set default royalties
      */
-    function setRoyalties(address payable[] calldata receivers, uint256[] calldata basisPoints) external;
+    function setRoyalties(
+        address payable[] calldata receivers,
+        uint256[] calldata basisPoints
+    ) external;
 
     /**
      * @dev Set royalties of a token
      */
-    function setRoyalties(uint256 tokenId, address payable[] calldata receivers, uint256[] calldata basisPoints) external;
+    function setRoyalties(
+        uint256 tokenId,
+        address payable[] calldata receivers,
+        uint256[] calldata basisPoints
+    ) external;
 
     /**
      * @dev Set royalties of an extension
      */
-    function setRoyaltiesExtension(address extension, address payable[] calldata receivers, uint256[] calldata basisPoints) external;
+    function setRoyaltiesExtension(
+        address extension,
+        address payable[] calldata receivers,
+        uint256[] calldata basisPoints
+    ) external;
 
     /**
      * @dev Get royalites of a token.  Returns list of receivers and basisPoints
      */
-    function getRoyalties(uint256 tokenId) external view returns (address payable[] memory, uint256[] memory);
-    
-    // Royalty support for various other standards
-    function getFeeRecipients(uint256 tokenId) external view returns (address payable[] memory);
-    function getFeeBps(uint256 tokenId) external view returns (uint[] memory);
-    function getFees(uint256 tokenId) external view returns (address payable[] memory, uint256[] memory);
-    function royaltyInfo(uint256 tokenId, uint256 value) external view returns (address, uint256);
+    function getRoyalties(uint256 tokenId)
+        external
+        view
+        returns (address payable[] memory, uint256[] memory);
 
+    // Royalty support for various other standards
+    function getFeeRecipients(uint256 tokenId)
+        external
+        view
+        returns (address payable[] memory);
+
+    function getFeeBps(uint256 tokenId)
+        external
+        view
+        returns (uint256[] memory);
+
+    function getFees(uint256 tokenId)
+        external
+        view
+        returns (address payable[] memory, uint256[] memory);
+
+    function royaltyInfo(uint256 tokenId, uint256 value)
+        external
+        view
+        returns (address, uint256);
 }

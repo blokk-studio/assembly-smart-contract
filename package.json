@@ -1,11 +1,11 @@
 {
-  "name": "Blz_NFTmarketplace",
+  "name": "assembly-nftmarketplace",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "scripts": {
     "help": "npx hardhat help",
     "accounts": "npx hardhat accounts",
