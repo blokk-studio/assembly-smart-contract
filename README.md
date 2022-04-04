@@ -18,10 +18,10 @@ yarn install
 
 ## Running Deployments
 
-**Example Rinkeby:**
+**Example Ethereum Mainnet:**
 
 ```bash
-yarn deploy:rinkeby
+yarn deploy:ethmain
 ```
 
 > The deployment script [`deploy.ts`](./scripts/deploy.ts) includes the confirmed constructor arguments used for the production deployment.
