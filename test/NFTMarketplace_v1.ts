@@ -50,7 +50,7 @@ describe("NFT_Marketplace_v1", function () {
       [allowedCaller.address],
       "0x0000000000000000000000000000000000000000"
     )).to.be.revertedWith("ZeroAddress()");
-
+    
     await expect( Marketplace.deploy(
       recipient.address,
       ["0x0000000000000000000000000000000000000000"],
@@ -297,10 +297,6 @@ describe("NFT_Marketplace_v1", function () {
         .connect(allowedCaller)
         .createLot(erc1155.address, 1, artist1.address, price, true, 25);
 
-      await erc721["setRoyalties(address[],uint256[])"](
-        [artist1.address, artist2.address],
-        [5000, 2000]
-      );
     });
 
     it("reject when trying to buy a non-existent lot", async function () {
@@ -353,10 +349,9 @@ describe("NFT_Marketplace_v1", function () {
       ).to.be.revertedWith("InvalidAmount()");
     });
 
-    it("success erc721 and check royalties", async function () {
+    it("success erc721", async function () {
       const balances =[];
       balances[0]=await artist1.getBalance();
-      balances[1]=await artist2.getBalance();
       balances[2]=await buyer.getBalance();
       balances[3]=await recipient.getBalance();
 
@@ -388,10 +383,9 @@ describe("NFT_Marketplace_v1", function () {
 
       const txPrice = txReciept.effectiveGasPrice.mul(txReciept.cumulativeGasUsed);
 
-      expect(await artist1.getBalance()).to.be.equal(balances[0].add(lot.price.mul(50).div(100)));
-      expect(await artist2.getBalance()).to.be.equal(balances[1].add(lot.price.mul(20).div(100)));
+      expect(await artist1.getBalance()).to.be.equal(balances[0].add(lot.price.mul(80).div(100)));
       expect(await buyer.getBalance()).to.be.equal(balances[2].sub(txPrice.add(price)));
-      expect(await recipient.getBalance()).to.be.equal(balances[3].add(lot.price.mul(30).div(100)));
+      expect(await recipient.getBalance()).to.be.equal(balances[3].add(lot.price.mul(20).div(100)));
     });
 
     it("success erc721 with dust", async function () {
@@ -678,6 +672,7 @@ describe("NFT_Marketplace_v1", function () {
       await marketplace.updateRecipient(artist2.address);
       expect(await marketplace.recipient()).to.be.equal(artist2.address);
     });
+
 
     it("allowed caller", async function () {
       expect(

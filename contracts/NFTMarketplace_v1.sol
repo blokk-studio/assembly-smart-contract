@@ -13,7 +13,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./utils/TransferHelper.sol";
-import "./utils/IRoyalties.sol";
 
 contract NFTMarketplace is
     ReentrancyGuard,
@@ -227,7 +226,6 @@ contract NFTMarketplace is
         lots[lotId].lotStart = block.timestamp;
         lots[lotId].owner = owner;
         lots[lotId].status = LotStatus.Active;
-
         lots[lotId].is1155 = is1155;
 
         if (is1155) lots[lotId].totalSupply = amount;
@@ -479,12 +477,8 @@ contract NFTMarketplace is
             localLot.tokenId
         );
 
-        uint256 recipientAmount = _payRoyalties(
-            localLot.token,
-            localLot.tokenId,
-            localLot.price
-        );
-        TransferHelper.safeTransferETH(recipient, recipientAmount);
+        TransferHelper.safeTransferETH(localLot.owner, localLot.price * 80 / 100);
+        TransferHelper.safeTransferETH(recipient, localLot.price * 20 / 100);
 
         // refund dust eth, if any
         if (msg.value > localLot.price)
@@ -535,12 +529,9 @@ contract NFTMarketplace is
             "0x0"
         );
 
-        uint256 recipientAmount = _payRoyalties(
-            localLot.token,
-            localLot.tokenId,
-            totalPrice
-        );
-        TransferHelper.safeTransferETH(recipient, recipientAmount);
+
+        TransferHelper.safeTransferETH(localLot.owner, totalPrice * 80 / 100);
+        TransferHelper.safeTransferETH(recipient, totalPrice * 20 / 100);
 
         // refund dust eth, if any
         if (msg.value > totalPrice)
@@ -567,57 +558,6 @@ contract NFTMarketplace is
         );
     }
 
-    ///@notice If token support, return royalty info.
-    ///@dev The getRoyalties function is used instead of the EIP-2981 standard because EIP-2981 does not allow
-    /// information to be retrieved if royalties need to be paid to multiple recipients.
-    ///@param token - address of NFT collection
-    ///@param tokenId - id of target token
-    ///@return receivers - list of addresses, recipients of royalties
-    ///@return amounts - royalty percentage list
-    function _getRoyalties(address token, uint256 tokenId)
-        private
-        returns (address payable[] memory receivers, uint256[] memory amounts)
-    {
-        try IRoyalties(token).getRoyalties(tokenId) returns (
-            address payable[] memory receivers,
-            uint256[] memory amounts
-        ) {
-            return (receivers, amounts);
-        } catch {}
-    }
-
-    ///@notice Pays royalties that are written into the token contract.
-    ///@param token - address of NFT collection
-    ///@param tokenId - id of target token
-    ///@param price - lot price in wei
-    ///@return recipientAmount - balance of the amount minus royalties.
-    function _payRoyalties(
-        address token,
-        uint256 tokenId,
-        uint256 price
-    ) private returns (uint256 recipientAmount) {
-        address payable[] memory receivers;
-        uint256[] memory royalties;
-        recipientAmount = price;
-        uint256 amount;
-
-        (receivers, royalties) = _getRoyalties(token, tokenId);
-
-        uint256 length = receivers.length;
-
-        for (uint256 i; i < length; ) {
-            if (royalties[i] != 0) {
-                amount = (royalties[i] * price) / 10000;
-                TransferHelper.safeTransferETH(receivers[i], amount);
-                recipientAmount -= amount;
-            }
-            unchecked {
-                ++i;
-            }
-        }
-
-        return recipientAmount;
-    }
 
     /* --- OWNER --- */
 
