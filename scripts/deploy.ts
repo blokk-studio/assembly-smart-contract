@@ -11,8 +11,8 @@ async function main() {
   ];
   const _owner = "0xfEaE88b979ec76FF83F96dfBb5CFca42b92B6A1F";
 
-  const NFTMarketplace = await ethers.getContractFactory("AssemblyCurated");
-  const contract = await NFTMarketplace.deploy(
+  const AssemblyCurated = await ethers.getContractFactory("AssemblyCurated");
+  const contract = await AssemblyCurated.deploy(
     recipient,
     _allowedCallers,
     _owner
@@ -20,7 +20,7 @@ async function main() {
 
   await contract.deployed();
 
-  console.log("NFTMarketplace deployed to:", contract.address);
+  console.log("AssemblyCurated deployed to:", contract.address);
 }
 
 main().catch((error) => {
