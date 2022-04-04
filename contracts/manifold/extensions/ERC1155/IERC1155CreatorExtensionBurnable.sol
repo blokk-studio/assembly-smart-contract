@@ -15,5 +15,9 @@ interface IERC1155CreatorExtensionBurnable is IERC165 {
     /**
      * @dev callback handler for burn events
      */
-    function onBurn(address owner, uint256[] calldata tokenIds, uint256[] calldata amounts) external;
+    function onBurn(
+        address owner,
+        uint256[] calldata tokenIds,
+        uint256[] calldata amounts
+    ) external;
 }

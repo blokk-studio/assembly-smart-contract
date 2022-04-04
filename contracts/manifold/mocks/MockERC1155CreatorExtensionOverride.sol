@@ -6,8 +6,10 @@ import "../core/IERC1155CreatorCore.sol";
 import "../extensions/ERC1155/ERC1155CreatorExtensionApproveTransfer.sol";
 import "../extensions/ICreatorExtensionTokenURI.sol";
 
-contract MockERC1155CreatorExtensionOverride is ERC1155CreatorExtensionApproveTransfer, ICreatorExtensionTokenURI {
-
+contract MockERC1155CreatorExtensionOverride is
+    ERC1155CreatorExtensionApproveTransfer,
+    ICreatorExtensionTokenURI
+{
     bool _approveEnabled;
     string _tokenURI;
     address _creator;
@@ -19,12 +21,23 @@ contract MockERC1155CreatorExtensionOverride is ERC1155CreatorExtensionApproveTr
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155CreatorExtensionApproveTransfer, IERC165) returns (bool) {
-        return interfaceId == type(ICreatorExtensionTokenURI).interfaceId
-            || super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC1155CreatorExtensionApproveTransfer, IERC165)
+        returns (bool)
+    {
+        return
+            interfaceId == type(ICreatorExtensionTokenURI).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
-    function testMintNew(address[] calldata to, uint256[] calldata amounts, string[] calldata uris) external {
+    function testMintNew(
+        address[] calldata to,
+        uint256[] calldata amounts,
+        string[] calldata uris
+    ) external {
         IERC1155CreatorCore(_creator).mintExtensionNew(to, amounts, uris);
     }
 
@@ -36,14 +49,23 @@ contract MockERC1155CreatorExtensionOverride is ERC1155CreatorExtensionApproveTr
         _tokenURI = uri;
     }
 
-    function approveTransfer(address, address, uint256[] calldata, uint256[] calldata) external view virtual override returns (bool) {
-       return _approveEnabled;
+    function approveTransfer(
+        address,
+        address,
+        uint256[] calldata,
+        uint256[] calldata
+    ) external view virtual override returns (bool) {
+        return _approveEnabled;
     }
 
-    function tokenURI(address creator, uint256) external view virtual override returns (string memory) {
+    function tokenURI(address creator, uint256)
+        external
+        view
+        virtual
+        override
+        returns (string memory)
+    {
         require(creator == _creator, "Invalid");
         return _tokenURI;
     }
-
-
 }

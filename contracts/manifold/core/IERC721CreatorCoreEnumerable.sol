@@ -10,27 +10,39 @@ import "./IERC721CreatorCore.sol";
  * @dev Core ERC721 creator interface (with enumerable api's)
  */
 interface IERC721CreatorCoreEnumerable is IERC721CreatorCore {
-
     /*
      * @dev gets the total number of tokens created by the extension (unburned)
      */
-    function totalSupplyExtension(address extension) external view returns (uint256);
+    function totalSupplyExtension(address extension)
+        external
+        view
+        returns (uint256);
 
     /*
-     * @dev gets tokenId of an extension by index. 
+     * @dev gets tokenId of an extension by index.
      * Iterate over this to get the full list of tokens of a given extension
      */
-    function tokenByIndexExtension(address extension, uint256 index) external view returns (uint256);
+    function tokenByIndexExtension(address extension, uint256 index)
+        external
+        view
+        returns (uint256);
 
     /*
      * @dev get balance of owner for an extension
      */
-   function balanceOfExtension(address extension, address owner) external view returns (uint256 balance);
+    function balanceOfExtension(address extension, address owner)
+        external
+        view
+        returns (uint256 balance);
 
-   /*
-    * @dev Returns a token ID owned by `owner` at a given `index` of its token list for a given extension
-    */
-   function tokenOfOwnerByIndexExtension(address extension, address owner, uint256 index) external view returns (uint256 tokenId);
+    /*
+     * @dev Returns a token ID owned by `owner` at a given `index` of its token list for a given extension
+     */
+    function tokenOfOwnerByIndexExtension(
+        address extension,
+        address owner,
+        uint256 index
+    ) external view returns (uint256 tokenId);
 
     /*
      * @dev gets the total number of tokens created with no extension
@@ -38,7 +50,7 @@ interface IERC721CreatorCoreEnumerable is IERC721CreatorCore {
     function totalSupplyBase() external view returns (uint256);
 
     /*
-     * @dev gets tokenId of the root creator contract by index. 
+     * @dev gets tokenId of the root creator contract by index.
      * Iterate over this to get the full list of tokens with no extension.
      */
     function tokenByIndexBase(uint256 index) external view returns (uint256);
@@ -46,11 +58,16 @@ interface IERC721CreatorCoreEnumerable is IERC721CreatorCore {
     /*
      * @dev get balance of owner for tokens with no extension
      */
-    function balanceOfBase(address owner) external view returns (uint256 balance);
+    function balanceOfBase(address owner)
+        external
+        view
+        returns (uint256 balance);
 
     /*
      * @dev Returns a token ID owned by `owner` at a given `index` of its token list for tokens with no extension
      */
-    function tokenOfOwnerByIndexBase(address owner, uint256 index) external view returns (uint256 tokenId);
-
+    function tokenOfOwnerByIndexBase(address owner, uint256 index)
+        external
+        view
+        returns (uint256 tokenId);
 }

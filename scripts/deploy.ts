@@ -1,32 +1,28 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `npx hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
 import { ethers } from "hardhat";
 
 async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
-  // await hre.run('compile');
+  const recipient = "0xfEaE88b979ec76FF83F96dfBb5CFca42b92B6A1F";
+  const _allowedCallers: string[] = [
+    "0xEF5245d9685CD918a2Bf0d216c2e7091446AcFF6",
+    "0x09885b996F81122D84332E3f66605F681d9F22a6",
+    "0x4aD06A01C14cB8CF20E49Fc53c647b882C1628e9",
+    "0x0e55ea6D1C4C0e50aA7B3Fc1D13974B01f072f84",
+    "0xD71b6d2C8f4a088396983d5586866563fcA75447",
+  ];
+  const _owner = "0xfEaE88b979ec76FF83F96dfBb5CFca42b92B6A1F";
 
-  const recipient = "0x9F3f11d72d96910df008Cfe3aBA40F361D2EED03";
-  const _allowedCallers: string[]= ["0x9F3f11d72d96910df008Cfe3aBA40F361D2EED03", "0x3854Ca47Abc62A3771fE06ab45622A42C4A438Cf"];
-  const _owner = "0x3854Ca47Abc62A3771fE06ab45622A42C4A438Cf"
-
-  // We get the contract to deploy
   const NFTMarketplace = await ethers.getContractFactory("NFTMarketplace");
-  const instance = await NFTMarketplace.deploy(recipient, _allowedCallers, _owner);
+  const contract = await NFTMarketplace.deploy(
+    recipient,
+    _allowedCallers,
+    _owner
+  );
 
-  await instance.deployed();
+  await contract.deployed();
 
+  console.log("NFTMarketplace deployed to:", contract.address);
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;

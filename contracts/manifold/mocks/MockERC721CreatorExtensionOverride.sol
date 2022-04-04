@@ -6,8 +6,10 @@ import "../core/IERC721CreatorCore.sol";
 import "../extensions/ERC721/ERC721CreatorExtensionApproveTransfer.sol";
 import "../extensions/ICreatorExtensionTokenURI.sol";
 
-contract MockERC721CreatorExtensionOverride is ERC721CreatorExtensionApproveTransfer, ICreatorExtensionTokenURI {
-
+contract MockERC721CreatorExtensionOverride is
+    ERC721CreatorExtensionApproveTransfer,
+    ICreatorExtensionTokenURI
+{
     bool _approveEnabled;
     string _tokenURI;
     address _creator;
@@ -19,9 +21,16 @@ contract MockERC721CreatorExtensionOverride is ERC721CreatorExtensionApproveTran
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721CreatorExtensionApproveTransfer, IERC165) returns (bool) {
-        return interfaceId == type(ICreatorExtensionTokenURI).interfaceId
-            || super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721CreatorExtensionApproveTransfer, IERC165)
+        returns (bool)
+    {
+        return
+            interfaceId == type(ICreatorExtensionTokenURI).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     function testMint(address to) external {
@@ -36,14 +45,22 @@ contract MockERC721CreatorExtensionOverride is ERC721CreatorExtensionApproveTran
         _tokenURI = uri;
     }
 
-    function approveTransfer(address, address, uint256) external view virtual override returns (bool) {
+    function approveTransfer(
+        address,
+        address,
+        uint256
+    ) external view virtual override returns (bool) {
         return _approveEnabled;
     }
 
-    function tokenURI(address creator, uint256) external view virtual override returns (string memory) {
+    function tokenURI(address creator, uint256)
+        external
+        view
+        virtual
+        override
+        returns (string memory)
+    {
         require(creator == _creator, "Invalid");
         return _tokenURI;
     }
-
-
 }
