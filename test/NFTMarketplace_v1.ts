@@ -2,14 +2,14 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   ERC721Creator,
   ERC1155Creator,
-  NFTMarketplace,
+  AssemblyCurated,
 } from "../typechain-types";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 
 describe("NFT_Marketplace_v1", function () {
-  let marketplace: NFTMarketplace;
+  let marketplace: AssemblyCurated;
   let erc721: ERC721Creator;
   let erc1155: ERC1155Creator;
   let owner: SignerWithAddress,
@@ -33,7 +33,7 @@ describe("NFT_Marketplace_v1", function () {
     erc721 = await ERC721.deploy("721", "token");
     erc1155 = await ERC1155.deploy();
 
-    const Marketplace = await ethers.getContractFactory("NFTMarketplace");
+    const Marketplace = await ethers.getContractFactory("AssemblyCurated");
 
     marketplace = await Marketplace.deploy(
       recipient.address,
@@ -43,7 +43,7 @@ describe("NFT_Marketplace_v1", function () {
   });
 
   it("constructor", async function () {
-    const Marketplace = await ethers.getContractFactory("NFTMarketplace");
+    const Marketplace = await ethers.getContractFactory("AssemblyCurated");
 
     await expect(
       Marketplace.deploy(

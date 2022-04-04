@@ -14,7 +14,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./utils/TransferHelper.sol";
 
-contract NFTMarketplace is
+contract AssemblyCurated is
     ReentrancyGuard,
     Ownable,
     IERC721Receiver,
