@@ -26,7 +26,7 @@ yarn deploy:ethmain
 
 > The deployment script [`deploy.ts`](./scripts/deploy.ts) includes the confirmed constructor arguments used for the production deployment.
 
-## Etherscan verification
+## Etherscan Verification
 
 ```bash
 npx hardhat verify --network ethMain --constructor-args arguments.js <DEPLOYED_CONTRACT_ADDRESS>
