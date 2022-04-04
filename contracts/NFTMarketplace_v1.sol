@@ -154,7 +154,7 @@ contract NFTMarketplace is
         uint256 _value,
         bytes calldata _data
     ) external pure override returns (bytes4) {
-        // return bytes4(keccak256("onERC1155Received(address,address,uint,uint,bytes)"));
+        // return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
         return 0xf23a6e61;
     }
 
@@ -165,7 +165,7 @@ contract NFTMarketplace is
         uint256[] calldata _values,
         bytes calldata _data
     ) external pure override returns (bytes4) {
-        // return bytes4(keccak256("onERC1155BatchReceived(address,address,uint[],uint[],bytes)"));
+        // return bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"));
         return 0xbc197c81;
     }
 
@@ -175,7 +175,7 @@ contract NFTMarketplace is
         uint256 tokenId,
         bytes calldata data
     ) external pure override returns (bytes4) {
-        // return bytes4(keccak256("onERC721Received(address,address,uint,bytes)"));
+        // return bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
         return 0x150b7a02;
     }
 
@@ -477,8 +477,9 @@ contract NFTMarketplace is
             localLot.tokenId
         );
 
-        TransferHelper.safeTransferETH(localLot.owner, localLot.price * 80 / 100);
-        TransferHelper.safeTransferETH(recipient, localLot.price * 20 / 100);
+        uint256 ownerValue = (localLot.price * 80) / 100;
+        TransferHelper.safeTransferETH(localLot.owner, ownerValue);
+        TransferHelper.safeTransferETH(recipient, localLot.price - ownerValue);
 
         // refund dust eth, if any
         if (msg.value > localLot.price)
@@ -529,9 +530,9 @@ contract NFTMarketplace is
             "0x0"
         );
 
-
-        TransferHelper.safeTransferETH(localLot.owner, totalPrice * 80 / 100);
-        TransferHelper.safeTransferETH(recipient, totalPrice * 20 / 100);
+        uint256 ownerValue = (totalPrice * 80) / 100;
+        TransferHelper.safeTransferETH(localLot.owner, ownerValue);
+        TransferHelper.safeTransferETH(recipient, totalPrice - ownerValue);
 
         // refund dust eth, if any
         if (msg.value > totalPrice)
@@ -557,7 +558,6 @@ contract NFTMarketplace is
             localLot.price
         );
     }
-
 
     /* --- OWNER --- */
 
