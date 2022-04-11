@@ -1,0 +1,3 @@
+[submodule "AssemblyCurated/lib/ds-test"]
+	path = AssemblyCurated/lib/ds-test
+	url = https://github.com/dapphub/ds-test
