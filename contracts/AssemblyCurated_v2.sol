@@ -29,8 +29,9 @@ contract AssemblyCuratedV2 is
     EIP712
 {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    string private constant SIGNING_DOMAIN = "bLZ-LazyMintingNFT-Voucher";
+    string private constant SIGNING_DOMAIN = "AssemblyCurated-LazyMintingNFT-Voucher";
     string private constant SIGNATURE_VERSION = "1";
+    uint256 private constant _OWNER_FEE = 80;
 
     enum LotStatus {
         Inactive,
@@ -43,28 +44,28 @@ contract AssemblyCuratedV2 is
         address token;
         bool is1155; // true - erc1155, false - erc721
         address owner;
-        uint tokenId;
-        uint price;
-        uint lotStart;
-        uint lotEnd;
+        uint256 tokenId;
+        uint256 price;
+        uint256 lotStart;
+        uint256 lotEnd;
         LotStatus status;
-        uint totalSupply; // 0 - erc721
-        uint sold;
+        uint256 totalSupply; // 0 - erc721
+        uint256 sold;
     }
 
     struct NFTVoucher {
         /// @notice The id of the voucher. Must be unique - if another token with this ID already exists, the redeem function will revert.
-        uint voucherId;
+        uint256 voucherId;
         /// @notice Token address.
         address token;
         /// @notice If the required ERC1155 token is already minted, you must specify token id, if not - set zero.
-        uint tokenId;
+        uint256 tokenId;
         /// @notice The minimum price (in wei) that the NFT creator is willing to accept for the initial sale of this NFT.
-        uint price;
+        uint256 price;
         /// @notice Is this token ERC1155?
         bool is1155;
         /// @notice Amount for ERC1155.
-        uint amount;
+        uint256 amount;
         /// @notice The metadata URI to associate with this token.
         string uri;
         /// @notice the EIP-712 signature of all other fields in the NFTVoucher struct. For a voucher to be valid, it must be signed by an account with the MINTER_ROLE.
@@ -72,35 +73,39 @@ contract AssemblyCuratedV2 is
     }
 
     event NewLot(
-        uint indexed lotId,
-        uint indexed tokenId,
+        uint256 indexed lotId,
+        uint256 indexed tokenId,
         address indexed token,
         address owner,
-        uint totalSupply
+        uint256 totalSupply
     );
     event SellLot(
-        uint indexed lotId,
-        uint indexed tokenId,
+        uint256 indexed lotId,
+        uint256 indexed tokenId,
         address indexed token,
         address buyer,
-        uint amount,
-        uint price
+        uint256 amount,
+        uint256 price
     );
-
-    event CancelLot(uint indexed lotId);
-    event DeactivateLot(uint indexed lotId);
-    event ActivateLot(uint indexed lotId);
-    event CloseLot(uint indexed lotId);
+    event CancelLot(uint256 indexed lotId);
+    event DeactivateLot(uint256 indexed lotId);
+    event ActivateLot(uint256 indexed lotId);
+    event CloseLot(uint256 indexed lotId);
     event UpdateRecipient(address newRecipient);
     event SetAllowedCaller(address caller, bool isAllowed);
     event RescueToken(
         address to,
         address token,
-        uint tokenId,
+        uint256 tokenId,
         bool is1155,
-        uint amount
+        uint256 amount
     );
-    event VoucherUsed(address indexed token, uint indexed tokenId, address recipient, uint voucherId);
+    event VoucherUsed(
+        address indexed token,
+        uint256 indexed tokenId,
+        address recipient,
+        uint256 voucherId
+    );
 
     ///@notice - return when one of parameters is zero address
     error ZeroAddress();
@@ -127,15 +132,15 @@ contract AssemblyCuratedV2 is
     error VoucherAlreadyUsed();
 
     address public recipient;
-    uint public lastLotId;
-    uint public activeLotCount;
+    uint256 public lastLotId;
+    uint256 public activeLotCount;
 
-    mapping(uint => Lot) public lots;
-    mapping(address => mapping(uint => uint[])) public tokenLots;
+    mapping(uint256 => Lot) public lots;
+    mapping(address => mapping(uint256 => uint256[])) public tokenLots;
     mapping(address => bool) public allowedCallers;
-    mapping(address => mapping(uint => bool)) private existingTokens;
+    mapping(address => mapping(uint256 => bool)) private existingTokens;
     EnumerableSet.UintSet private activeLots;
-    mapping(uint => bool) private usedVouchers;
+    mapping(uint256 => bool) public usedVouchers;
 
     constructor(
         address _recipient,
@@ -148,8 +153,8 @@ contract AssemblyCuratedV2 is
         }
         recipient = _recipient;
 
-        uint length = _allowedCallers.length;
-        for (uint i; i < length; ) {
+        uint256 length = _allowedCallers.length;
+        for (uint256 i; i < length; ) {
             if (_allowedCallers[i] == address(0)) {
                 revert ZeroAddress();
             }
@@ -191,32 +196,32 @@ contract AssemblyCuratedV2 is
     function onERC1155Received(
         address _operator,
         address _from,
-        uint _id,
-        uint _value,
+        uint256 _id,
+        uint256 _value,
         bytes calldata _data
     ) external pure override returns (bytes4) {
-        // return bytes4(keccak256("onERC1155Received(address,address,uint,uint,bytes)"));
+        // return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
         return 0xf23a6e61;
     }
 
     function onERC1155BatchReceived(
         address _operator,
         address _from,
-        uint[] calldata _ids,
-        uint[] calldata _values,
+        uint256[] calldata _ids,
+        uint256[] calldata _values,
         bytes calldata _data
     ) external pure override returns (bytes4) {
-        // return bytes4(keccak256("onERC1155BatchReceived(address,address,uint[],uint[],bytes)"));
+        // return bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"));
         return 0xbc197c81;
     }
 
     function onERC721Received(
         address operator,
         address from,
-        uint tokenId,
+        uint256 tokenId,
         bytes calldata data
     ) external pure override returns (bytes4) {
-        // return bytes4(keccak256("onERC721Received(address,address,uint,bytes)"));
+        // return bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
         return 0x150b7a02;
     }
 
@@ -231,12 +236,12 @@ contract AssemblyCuratedV2 is
     /// @return lotId - id of new lot
     function createLot(
         address token,
-        uint tokenId,
+        uint256 tokenId,
         address owner,
-        uint price,
+        uint256 price,
         bool is1155,
-        uint amount
-    ) public onlyAllowedCaller returns (uint) {
+        uint256 amount
+    ) public onlyAllowedCaller returns (uint256) {
         if (!isSupportedToken(token)) {
             revert InvalidToken();
         }
@@ -259,7 +264,7 @@ contract AssemblyCuratedV2 is
             IERC721(token).safeTransferFrom(owner, address(this), tokenId);
         }
 
-        uint lotId = ++lastLotId;
+        uint256 lotId = ++lastLotId;
 
         lots[lotId].tokenId = tokenId;
         lots[lotId].token = token;
@@ -290,13 +295,13 @@ contract AssemblyCuratedV2 is
     /// @param amounts - amounts of ERC1155 tokens
     function batchCreateLots(
         address[] calldata tokens,
-        uint[] calldata tokenIds,
+        uint256[] calldata tokenIds,
         address[] calldata owners,
-        uint[] calldata prices,
+        uint256[] calldata prices,
         bool[] calldata is1155s,
-        uint[] calldata amounts
+        uint256[] calldata amounts
     ) external onlyAllowedCaller {
-        uint length = tokens.length;
+        uint256 length = tokens.length;
         if (
             length != tokenIds.length ||
             length != owners.length ||
@@ -307,7 +312,7 @@ contract AssemblyCuratedV2 is
             revert WrongArrayLength();
         }
 
-        for (uint i; i < length; ) {
+        for (uint256 i; i < length; ) {
             createLot(
                 tokens[i],
                 tokenIds[i],
@@ -324,13 +329,15 @@ contract AssemblyCuratedV2 is
     }
 
     // ------ LAZY MINTING ------ //
-
+    /// @notice buy token by signed voucher
+    /// @param redeemer - recipient address
+    /// @param voucher - signed by minter NFTVoucher
     function buyWithMint(address redeemer, NFTVoucher calldata voucher)
         public
         payable
-        returns (uint)
+        returns (uint256)
     {
-        if(usedVouchers[voucher.voucherId]){
+        if (usedVouchers[voucher.voucherId]) {
             revert VoucherAlreadyUsed();
         }
 
@@ -342,28 +349,29 @@ contract AssemblyCuratedV2 is
             revert InvalidSignature();
         }
 
-        uint totalPrice = voucher.is1155 ? voucher.amount * voucher.price : voucher.price;
-    
+        uint256 totalPrice = voucher.is1155
+            ? voucher.amount * voucher.price
+            : voucher.price;
+
         if (msg.value < totalPrice) {
             revert InvalidValue();
         }
 
-
-        uint newTokenId = voucher.tokenId;
+        uint256 newTokenId = voucher.tokenId;
 
         if (voucher.is1155) {
-            if(voucher.amount == 0){
+            if (voucher.amount == 0) {
                 revert InvalidAmount();
             }
 
             address[] memory to = new address[](1);
             to[0] = redeemer;
 
-            uint[] memory amount = new uint[](1);
+            uint256[] memory amount = new uint256[](1);
             amount[0] = voucher.amount;
 
             if (voucher.tokenId != 0) {
-                uint[] memory tokensIds = new uint[](1);
+                uint256[] memory tokensIds = new uint256[](1);
                 tokensIds[0] = voucher.tokenId;
                 IERC1155CreatorCore(voucher.token).mintExtensionExisting(
                     to,
@@ -373,7 +381,7 @@ contract AssemblyCuratedV2 is
             } else {
                 string[] memory uri = new string[](1);
                 uri[0] = voucher.uri;
-                uint[] memory ids = IERC1155CreatorCore(voucher.token)
+                uint256[] memory ids = IERC1155CreatorCore(voucher.token)
                     .mintExtensionNew(to, amount, uri);
                 newTokenId = ids[0];
             }
@@ -384,20 +392,30 @@ contract AssemblyCuratedV2 is
             );
         }
 
-        uint ownerValue = (totalPrice * 80) / 100;
-        TransferHelper.safeTransferETH(Ownable(voucher.token).owner(), ownerValue);
+        uint256 ownerValue = (totalPrice * _OWNER_FEE) / 100;
+        TransferHelper.safeTransferETH(
+            Ownable(voucher.token).owner(),
+            ownerValue
+        );
         TransferHelper.safeTransferETH(recipient, totalPrice - ownerValue);
 
         // refund dust eth, if any
         if (msg.value > totalPrice) {
             TransferHelper.safeTransferETH(msg.sender, msg.value - totalPrice);
         }
-        
-        usedVouchers[voucher.voucherId]=true;
-        emit VoucherUsed(voucher.token, newTokenId, redeemer, voucher.voucherId);
+
+        usedVouchers[voucher.voucherId] = true;
+        emit VoucherUsed(
+            voucher.token,
+            newTokenId,
+            redeemer,
+            voucher.voucherId
+        );
         return newTokenId;
     }
 
+    /// @notice verify voucher signature
+    /// @return address of signer
     function _verify(NFTVoucher calldata voucher)
         internal
         view
@@ -407,6 +425,7 @@ contract AssemblyCuratedV2 is
         return ECDSA.recover(digest, voucher.signature);
     }
 
+    /// @notice returns voucher digest for recover
     function _hash(NFTVoucher calldata voucher)
         internal
         view
@@ -417,7 +436,7 @@ contract AssemblyCuratedV2 is
                 keccak256(
                     abi.encode(
                         keccak256(
-                            "NFTVoucher(uint voucherId,address token,uint tokenId,uint price,bool is1155,uint amount,string uri)"
+                            "NFTVoucher(uint256 voucherId,address token,uint256 tokenId,uint256 price,bool is1155,uint256 amount,string uri)"
                         ),
                         voucher.voucherId,
                         voucher.token,
@@ -432,8 +451,8 @@ contract AssemblyCuratedV2 is
     }
 
     /// @notice Returns the chain id of the current blockchain.
-    function getChainID() external view returns (uint) {
-        uint id;
+    function getChainID() external view returns (uint256) {
+        uint256 id;
         assembly {
             id := chainid()
         }
@@ -443,7 +462,7 @@ contract AssemblyCuratedV2 is
     ///@notice Buy active lot
     ///@param lotId - id of target lot
     ///@param amount - amount for ERC1155 token
-    function buyLot(uint lotId, uint amount) public payable nonReentrant {
+    function buyLot(uint256 lotId, uint256 amount) public payable nonReentrant {
         Lot memory localLot = lots[lotId];
 
         if (localLot.status != LotStatus.Active) {
@@ -461,7 +480,7 @@ contract AssemblyCuratedV2 is
     ///@dev For transfer to primary owner set newRecipient = address(0)
     ///@param lotId - id of target lot
     ///@param newRecipient - address of the recipient of the canceled token
-    function cancelLot(uint lotId, address newRecipient) public onlyOwner {
+    function cancelLot(uint256 lotId, address newRecipient) public onlyOwner {
         Lot memory localLot = lots[lotId];
 
         if (
@@ -503,15 +522,15 @@ contract AssemblyCuratedV2 is
     ///@param lotIds - ids of target lots
     ///@param newRecipients - addresses of the recipients of the canceled tokens
     function batchCancelLots(
-        uint[] calldata lotIds,
+        uint256[] calldata lotIds,
         address[] calldata newRecipients
     ) external onlyOwner {
-        uint length = lotIds.length;
+        uint256 length = lotIds.length;
         if (length != newRecipients.length) {
             revert WrongArrayLength();
         }
 
-        for (uint i; i < length; ) {
+        for (uint256 i; i < length; ) {
             cancelLot(lotIds[i], newRecipients[i]);
 
             unchecked {
@@ -522,7 +541,7 @@ contract AssemblyCuratedV2 is
 
     ///@notice Deactivate lot, but the token remains
     ///@param lotId - id of target lot
-    function deactivateLot(uint lotId) public onlyOwner {
+    function deactivateLot(uint256 lotId) public onlyOwner {
         Lot memory localLot = lots[lotId];
 
         if (localLot.status != LotStatus.Active) {
@@ -537,9 +556,9 @@ contract AssemblyCuratedV2 is
 
     /// @notice multiple deactivating of lots
     ///@param lotIds - ids of target lots
-    function batchDeactivateLots(uint[] calldata lotIds) external onlyOwner {
-        uint length = lotIds.length;
-        for (uint i; i < length; ) {
+    function batchDeactivateLots(uint256[] calldata lotIds) external onlyOwner {
+        uint256 length = lotIds.length;
+        for (uint256 i; i < length; ) {
             deactivateLot(lotIds[i]);
 
             unchecked {
@@ -550,7 +569,7 @@ contract AssemblyCuratedV2 is
 
     ///@notice Activation of a previously deactivated lot
     ///@param lotId - id of target lot
-    function activateLot(uint lotId) public onlyOwner {
+    function activateLot(uint256 lotId) public onlyOwner {
         Lot memory localLot = lots[lotId];
 
         if (localLot.status != LotStatus.Inactive && localLot.lotStart != 0) {
@@ -565,9 +584,9 @@ contract AssemblyCuratedV2 is
 
     ///@notice multiple activating of lots
     ///@param lotIds - ids of target lots
-    function batchActivateLots(uint[] calldata lotIds) external onlyOwner {
-        uint length = lotIds.length;
-        for (uint i; i < length; ) {
+    function batchActivateLots(uint256[] calldata lotIds) external onlyOwner {
+        uint256 length = lotIds.length;
+        for (uint256 i; i < length; ) {
             activateLot(lotIds[i]);
 
             unchecked {
@@ -580,20 +599,20 @@ contract AssemblyCuratedV2 is
     ///@dev If count > of active lots count, then will be returned empty Lot structures
     ///@param start - offset
     ///@param count - limit
-    function getActiveLots(uint start, uint count)
+    function getActiveLots(uint256 start, uint256 count)
         external
         view
         returns (Lot[] memory lotsData)
     {
-        uint end = EnumerableSet.length(activeLots);
+        uint256 end = EnumerableSet.length(activeLots);
         if (start + count < end) {
             end = start + count;
         }
 
         Lot memory lot;
-        uint idx;
+        uint256 idx;
         lotsData = new Lot[](count);
-        for (uint i = start; i < end; ) {
+        for (uint256 i = start; i < end; ) {
             lot = lots[EnumerableSet.at(activeLots, i)];
             lotsData[idx++] = lot;
 
@@ -614,7 +633,7 @@ contract AssemblyCuratedV2 is
     ///@notice checking if a lot exists with the specified token
     /// @param token - address of NFT collection
     /// @param tokenId - target token id
-    function doesLotExist(address token, uint tokenId)
+    function doesLotExist(address token, uint256 tokenId)
         private
         view
         returns (bool)
@@ -625,7 +644,7 @@ contract AssemblyCuratedV2 is
     ///@notice - buy lot with ERC721 token
     ///@param lotId - id of target lot
     ///@param localLot - target lot structure
-    function _buySingleLot(uint lotId, Lot memory localLot) private {
+    function _buySingleLot(uint256 lotId, Lot memory localLot) private {
         if (localLot.price > msg.value) {
             revert InvalidValue();
         }
@@ -636,7 +655,7 @@ contract AssemblyCuratedV2 is
             localLot.tokenId
         );
 
-        uint ownerValue = (localLot.price * 80) / 100;
+        uint256 ownerValue = (localLot.price * _OWNER_FEE) / 100;
         TransferHelper.safeTransferETH(localLot.owner, ownerValue);
         TransferHelper.safeTransferETH(recipient, localLot.price - ownerValue);
 
@@ -668,15 +687,15 @@ contract AssemblyCuratedV2 is
     ///@param lotId - id of target lot
     ///@param localLot - target lot structure
     function _buyMultipleLot(
-        uint lotId,
+        uint256 lotId,
         Lot memory localLot,
-        uint amount
+        uint256 amount
     ) private {
         if (amount == 0 || amount > localLot.totalSupply - localLot.sold) {
             revert InvalidAmount();
         }
 
-        uint totalPrice = amount * localLot.price;
+        uint256 totalPrice = amount * localLot.price;
         if (totalPrice > msg.value) {
             revert InvalidValue();
         }
@@ -689,10 +708,9 @@ contract AssemblyCuratedV2 is
             "0x0"
         );
 
-        uint ownerValue = (totalPrice * 80) / 100;
+        uint256 ownerValue = (totalPrice * _OWNER_FEE) / 100;
         TransferHelper.safeTransferETH(localLot.owner, ownerValue);
         TransferHelper.safeTransferETH(recipient, totalPrice - ownerValue);
-
 
         // refund dust eth, if any
         if (msg.value > totalPrice)
@@ -765,9 +783,9 @@ contract AssemblyCuratedV2 is
     function rescue(
         address to,
         address token,
-        uint tokenId,
+        uint256 tokenId,
         bool is1155,
-        uint amount
+        uint256 amount
     ) external onlyOwner {
         if (to == address(0)) {
             revert ZeroAddress();

@@ -2,7 +2,7 @@ import { randomInt } from "crypto";
 import ethers from "ethers";
 import { AssemblyCuratedV2 } from "../typechain-types/AssemblyCuratedV2";
 // These constants must match the ones used in the smart contract.
-const SIGNING_DOMAIN_NAME = "bLZ-LazyMintingNFT-Voucher";
+const SIGNING_DOMAIN_NAME = "AssemblyCurated-LazyMintingNFT-Voucher";
 const SIGNING_DOMAIN_VERSION = "1";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
@@ -62,12 +62,12 @@ class LazyMinter {
 
     const types = {
       NFTVoucher: [
-        { name: "voucherId", type: "uint" },
+        { name: "voucherId", type: "uint256" },
         { name: "token", type: "address" },
-        { name: "tokenId", type: "uint" },
-        { name: "price", type: "uint" },
+        { name: "tokenId", type: "uint256" },
+        { name: "price", type: "uint256" },
         { name: "is1155", type: "bool" },
-        { name: "amount", type: "uint" },
+        { name: "amount", type: "uint256" },
         { name: "uri", type: "string" },
       ],
     };
