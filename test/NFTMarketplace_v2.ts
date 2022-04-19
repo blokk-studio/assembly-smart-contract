@@ -41,9 +41,10 @@ describe("AssemblyCurated_v2", function () {
       recipient.address,
       [allowedCaller.address],
       "0x0000000000000000000000000000000000000000",
-      allowedCaller.address
+      [allowedCaller.address]
     );
   });
+
 
   it("constructor", async function(){
     const Marketplace = await ethers.getContractFactory("AssemblyCuratedV2");
@@ -52,21 +53,21 @@ describe("AssemblyCurated_v2", function () {
       "0x0000000000000000000000000000000000000000",
       [allowedCaller.address],
       "0x0000000000000000000000000000000000000000",
-      allowedCaller.address
+      [allowedCaller.address]
     )).to.be.revertedWith("ZeroAddress()");
     
     await expect( Marketplace.deploy(
       recipient.address,
       ["0x0000000000000000000000000000000000000000"],
       "0x0000000000000000000000000000000000000000",
-      allowedCaller.address
+      [allowedCaller.address]
     )).to.be.revertedWith('ZeroAddress()');
 
     let tmpMarketplace = await Marketplace.deploy(
       recipient.address,
       [allowedCaller.address],
       "0x0000000000000000000000000000000000000000",
-      allowedCaller.address
+      [allowedCaller.address]
     );
 
     expect(await tmpMarketplace.owner()).to.be.equal(owner.address);
@@ -75,7 +76,7 @@ describe("AssemblyCurated_v2", function () {
       recipient.address,
       [allowedCaller.address],
       allowedCaller.address,
-      allowedCaller.address
+      [allowedCaller.address]
     );
 
     expect(await tmpMarketplace.owner()).to.be.equal(allowedCaller.address);

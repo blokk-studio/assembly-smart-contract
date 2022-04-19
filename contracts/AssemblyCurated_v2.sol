@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -25,11 +24,10 @@ contract AssemblyCuratedV2 is
     Ownable,
     IERC721Receiver,
     IERC1155Receiver,
-    AccessControl,
     EIP712
 {
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    string private constant SIGNING_DOMAIN = "AssemblyCurated-LazyMintingNFT-Voucher";
+    string private constant SIGNING_DOMAIN =
+        "AssemblyCurated-LazyMintingNFT-Voucher";
     string private constant SIGNATURE_VERSION = "1";
     uint256 private constant _OWNER_FEE = 80;
 
@@ -138,6 +136,7 @@ contract AssemblyCuratedV2 is
     mapping(uint256 => Lot) public lots;
     mapping(address => mapping(uint256 => uint256[])) public tokenLots;
     mapping(address => bool) public allowedCallers;
+    mapping(address => bool) private minters;
     mapping(address => mapping(uint256 => bool)) private existingTokens;
     EnumerableSet.UintSet private activeLots;
     mapping(uint256 => bool) public usedVouchers;
@@ -146,7 +145,7 @@ contract AssemblyCuratedV2 is
         address _recipient,
         address[] memory _allowedCallers,
         address _owner,
-        address minter
+        address[] memory _minters
     ) payable EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) {
         if (_recipient == address(0)) {
             revert ZeroAddress();
@@ -170,7 +169,18 @@ contract AssemblyCuratedV2 is
             _transferOwnership(_owner);
         }
 
-        _setupRole(MINTER_ROLE, minter);
+        length = _minters.length;
+        for (uint256 i; i < length; ) {
+            if (_minters[i] == address(0)) {
+                revert ZeroAddress();
+            }
+
+            minters[_minters[i]] = true;
+
+            unchecked {
+                ++i;
+            }
+        }
     }
 
     modifier onlyAllowedCaller() {
@@ -184,13 +194,12 @@ contract AssemblyCuratedV2 is
         public
         view
         virtual
-        override(IERC165, AccessControl)
+        override(IERC165)
         returns (bool)
     {
         return
             interfaceId == type(IERC1155Receiver).interfaceId ||
-            interfaceId == type(IERC165).interfaceId ||
-            AccessControl.supportsInterface(interfaceId);
+            interfaceId == type(IERC165).interfaceId;
     }
 
     function onERC1155Received(
@@ -345,7 +354,7 @@ contract AssemblyCuratedV2 is
         address signer = _verify(voucher);
 
         // make sure that the signer is authorized to mint NFTs
-        if (!hasRole(MINTER_ROLE, signer)) {
+        if (!minters[signer]) {
             revert InvalidSignature();
         }
 
@@ -760,6 +769,29 @@ contract AssemblyCuratedV2 is
         }
         allowedCallers[caller] = true;
         emit SetAllowedCaller(caller, true);
+    }
+
+    ///@notice - removing minter
+    ///@param minter - minter address
+    function removeMinter(address minter) external onlyOwner {
+        if (!minters[minter]) {
+            revert AlreadySet();
+        }
+        minters[minter] = false;
+        emit SetAllowedCaller(minter, false);
+    }
+
+    ///@notice - adding a new minter
+    ///@param minter - minter address
+    function addMinter(address minter) external onlyOwner {
+        if (minter == address(0)) {
+            revert ZeroAddress();
+        }
+        if (minters[minter]) {
+            revert AlreadySet();
+        }
+        minters[minter] = true;
+        emit SetAllowedCaller(minter, true);
     }
 
     ///@notice - removing allowedCaller
