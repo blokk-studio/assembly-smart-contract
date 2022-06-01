@@ -23,7 +23,7 @@ import "./utils/TransferHelper.sol";
 contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
     string private constant SIGNING_DOMAIN =
         "AssemblyCurated-LazyMintingNFT-Voucher";
-    string private constant SIGNATURE_VERSION = "1";
+    string private constant SIGNATURE_VERSION = "3";
 
     struct NFTVoucher {
         /// @notice The id of the voucher. Must be unique - if another token with this ID already exists, the redeem function will revert.
@@ -278,6 +278,7 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
         return id;
     }
 
+    /// @notice - check if sum of all vouchers fees equal 100
     function checkFeesSum(NFTVoucher calldata voucher)
         private
         pure
@@ -298,7 +299,7 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
     }
 
     /* --- OWNER --- */
-
+    ///@notice - getter for owner for check address on minter role
     function isMinter(address minter) external view onlyOwner returns (bool) {
         return minters[minter];
     }
@@ -336,10 +337,12 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
         emit SetMinter(minter, true);
     }
 
+    ///@notice - pause contract
     function pause() external onlyOwner {
         _pause();
     }
-
+    
+    ///@notice - unpause contract
     function unpause() external onlyOwner {
         _unpause();
     }
