@@ -7,7 +7,7 @@ import {
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
-import LazyMinter from "../helpers/minter";
+import LazyMinterV2 from "../helpers/minter_v2";
 
 describe("AssemblyCurated_v2", function () {
   let marketplace: AssemblyCuratedV2;
@@ -19,7 +19,7 @@ describe("AssemblyCurated_v2", function () {
     artist1: SignerWithAddress,
     artist2: SignerWithAddress,
     buyer: SignerWithAddress;
-  let lazyMinter: LazyMinter;
+  let lazyMinter: LazyMinterV2;
 
   const price = "1000";
 
@@ -855,7 +855,7 @@ describe("AssemblyCurated_v2", function () {
   describe('lazy minting', function (){
 
     beforeEach(async () =>{
-      lazyMinter = new LazyMinter(marketplace, allowedCaller);
+      lazyMinter = new LazyMinterV2(marketplace, allowedCaller);
       await erc721["registerExtension(address,string)"](marketplace.address, '/test/uri/721');
       await erc1155["registerExtension(address,string)"](marketplace.address, '/test/uri/1155');
       
@@ -895,7 +895,7 @@ describe("AssemblyCurated_v2", function () {
     })
 
     it('reject when voucher with invalid signer', async function(){
-      const invalidLazyMinter = new LazyMinter(marketplace, owner);
+      const invalidLazyMinter = new LazyMinterV2(marketplace, owner);
       const voucher = await invalidLazyMinter.createVoucher(erc1155.address, 0, 100, true, 1 , '/test2/');
       await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher)).to.be.revertedWith('InvalidSignature()');
     })

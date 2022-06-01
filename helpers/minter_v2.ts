@@ -22,7 +22,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 /**
  * LazyMinter is a helper class that creates NFTVoucher objects and signs them, to be redeemed later by the LazyNFT contract.
  */
-class LazyMinter {
+class LazyMinterV2 {
   contract: AssemblyCuratedV2;
   signer: SignerWithAddress;
   _domain: object | null;
@@ -55,7 +55,7 @@ class LazyMinter {
     is1155: boolean,
     amount: ethers.BigNumber | number,
     uri: string
-  ): Promise<AssemblyCuratedV2.NFTVoucherStruct> {
+  ): Promise<AssemblyCuratedV2.NFTVoucherStruct > {
     const voucherId = randomInt(281474976710655);
     const voucher = { voucherId, token, tokenId, price, is1155, amount, uri };
     const domain = await this._signingDomain();
@@ -97,7 +97,7 @@ class LazyMinter {
   }
 }
 
-export default LazyMinter;
+export default LazyMinterV2;
 // module.exports = {
 //   LazyMinter
 // }

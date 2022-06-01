@@ -91,6 +91,7 @@ contract AssemblyCuratedV2 is
     event CloseLot(uint256 indexed lotId);
     event UpdateRecipient(address newRecipient);
     event SetAllowedCaller(address caller, bool isAllowed);
+    event SetMinter(address caller, bool isAllowed);
     event RescueToken(
         address to,
         address token,
@@ -291,7 +292,7 @@ contract AssemblyCuratedV2 is
         existingTokens[token][tokenId] = true;
         activeLotCount++;
 
-        emit NewLot(lotId, tokenId, token, owner, amount);
+        emit NewLot(lotId, tokenId, token, owner, lots[lotId].totalSupply);
         return lotId;
     }
 
@@ -748,6 +749,10 @@ contract AssemblyCuratedV2 is
 
     /* --- OWNER --- */
 
+    function isMinter(address minter) external view onlyOwner returns (bool){
+        return minters[minter];
+    }
+
     ///@notice - set new marketplace recipient address
     ///@param newRecipient - recipient address
     function updateRecipient(address newRecipient) external onlyOwner {
@@ -778,7 +783,7 @@ contract AssemblyCuratedV2 is
             revert AlreadySet();
         }
         minters[minter] = false;
-        emit SetAllowedCaller(minter, false);
+        emit SetMinter(minter, false);
     }
 
     ///@notice - adding a new minter
@@ -791,7 +796,7 @@ contract AssemblyCuratedV2 is
             revert AlreadySet();
         }
         minters[minter] = true;
-        emit SetAllowedCaller(minter, true);
+        emit SetMinter(minter, true);
     }
 
     ///@notice - removing allowedCaller
