@@ -1,4 +1,4 @@
-///SPDX-License-Identifier: MIT
+/// SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.9;
 
@@ -21,39 +21,54 @@ import "./manifold/core/IERC1155CreatorCore.sol";
 import "./utils/TransferHelper.sol";
 
 contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
-    string private constant SIGNING_DOMAIN =
-        "AssemblyCurated-LazyMintingNFT-Voucher";
-    string private constant SIGNATURE_VERSION = "3";
-
     struct NFTVoucher {
         /// @notice The id of the voucher. Must be unique - if another token with this ID already exists, the redeem function will revert.
         uint256 voucherId;
-        /// @notice Token address.
-        address token;
         /// @notice If the required ERC1155 token is already minted, you must specify token id, if not - set zero.
         uint256 tokenId;
         /// @notice The minimum price (in wei) that the NFT creator is willing to accept for the initial sale of this NFT.
         uint256 price;
-        /// @notice Is this token ERC1155?
-        bool is1155;
         /// @notice Amount for ERC1155.
         uint256 amount;
-        /// @notice The metadata URI to associate with this token.
-        string uri;
+        /// @notice Token address.
+        address token;
+        /// @notice Addresses of additional defined wallets
+        address[] definedWallets;
         /// @notice Distribution percentage for AssemblyCurated recipient
         uint8 recipientFee;
         /// @notice Distribution percentage for token owner
         uint8 ownerFee;
-        /// @notice Addresses of additional defined wallets
-        address[] definedWallets;
-        /// @notice Distribution percentage for additional defined wallets
-        uint8[] definedWalletsFees;
+        /// @notice The metadata URI to associate with this token.
+        string uri;
         /// @notice the EIP-712 signature of all other fields in the NFTVoucher struct. For a voucher to be valid, it must be signed by an account with the MINTER_ROLE.
         bytes signature;
+        /// @notice Is this token ERC1155?
+        bool is1155;
+        /// @notice Distribution percentage for additional defined wallets
+        uint8[] definedWalletsFees;
     }
 
+    string private constant _SIGNING_DOMAIN = "AssemblyCurated-LazyMintingNFT-Voucher";
+    string private constant _SIGNATURE_VERSION = "3";
+    uint256 public immutable INITIAL_CHAIN_ID;
+
+    address public recipient;
+
+    mapping(address => bool) private minters;
+    mapping(uint256 => bool) public usedVouchers;
+
+    /// @notice - signals a change of recipient
+    /// @param newRecipient - address of new recipient
     event UpdateRecipient(address newRecipient);
-    event SetMinter(address caller, bool isAllowed);
+    /// @notice - signals the addition of a new minter or removal of an existing minter
+    /// @param caller - address of target minter
+    /// @param isAllowed - boolean indicating whether a minter has been added or removed
+    event SetMinter(address indexed caller, bool isAllowed);
+    /// @notice - signals use of the voucher
+    /// @param token - address of target minted token 
+    /// @param tokenId - id of target minted token
+    /// @param recipient - 
+    /// @param voucherId - used voucher id
     event VoucherUsed(
         address indexed token,
         uint256 indexed tokenId,
@@ -61,36 +76,33 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
         uint256 voucherId
     );
 
-    ///@notice - return when one of parameters is zero address
+    /// @notice - return when one of parameters is zero address
     error ZeroAddress();
-    ///@notice - array lengths do not match
+    /// @notice - array lengths do not match
     error WrongArrayLength();
-    ///@notice - not enough eth
+    /// @notice - not enough eth
     error InvalidValue();
-    ///@notice - amount equal to zero or less than the amount of tokens available in the lot
+    /// @notice - amount equal to zero or less than the amount of tokens available in the lot
     error InvalidAmount();
-    ///@notice - allowedCaller already added or removed
+    /// @notice - allowedCaller already added or removed
     error AlreadySet();
-    ///@notice - voucher signature is incorrect.
+    /// @notice - voucher signature is incorrect.
     error InvalidSignature();
-    ///@notice - voucher is already used.
+    /// @notice - voucher is already used.
     error VoucherAlreadyUsed();
-    ///@notice - sum of voucher fees is not equal 100
+    /// @notice - sum of voucher fees is not equal 100
     error InvalidVoucherFees();
-
-    address public recipient;
-
-    mapping(address => bool) private minters;
-    mapping(uint256 => bool) public usedVouchers;
 
     constructor(
         address _recipient,
         address _owner,
         address[] memory _minters
-    ) payable EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) {
+    ) payable EIP712(_SIGNING_DOMAIN, _SIGNATURE_VERSION) {
         if (_recipient == address(0)) {
             revert ZeroAddress();
         }
+        INITIAL_CHAIN_ID = block.chainid;
+
         recipient = _recipient;
 
         if (_owner != address(0)) {
@@ -116,9 +128,10 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
     /// @param redeemer - recipient address
     /// @param voucher - signed by minter NFTVoucher
     function buyWithMint(address redeemer, NFTVoucher calldata voucher)
-        public
+        external
         payable
         whenNotPaused
+        nonReentrant
         returns (uint256)
     {
         if (usedVouchers[voucher.voucherId]) {
@@ -185,6 +198,8 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
                 voucher.uri
             );
         }
+        
+        usedVouchers[voucher.voucherId] = true;
 
         uint256 sendValue;
 
@@ -219,7 +234,6 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
             TransferHelper.safeTransferETH(msg.sender, msg.value - sendValue);
         }
 
-        usedVouchers[voucher.voucherId] = true;
         emit VoucherUsed(
             voucher.token,
             newTokenId,
@@ -229,7 +243,60 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
         return newTokenId;
     }
 
+    /* --- OWNER --- */
+    /// @notice - getter for owner for check address on minter role
+    /// @param minter - target address for check
+    function isMinter(address minter) external view onlyOwner returns (bool) {
+        return minters[minter];
+    }
+
+    /// @notice - set new marketplace recipient address
+    /// @param newRecipient - recipient address
+    function updateRecipient(address newRecipient) external onlyOwner {
+        if (newRecipient == address(0)) {
+            revert ZeroAddress();
+        }
+        recipient = newRecipient;
+        emit UpdateRecipient(newRecipient);
+    }
+
+    /// @notice - removing minter
+    /// @param minter - minter address
+    function removeMinter(address minter) external onlyOwner {
+        if (!minters[minter]) {
+            revert AlreadySet();
+        }
+        minters[minter] = false;
+        emit SetMinter(minter, false);
+    }
+
+    /// @notice - adding a new minter
+    /// @param minter - minter address
+    function addMinter(address minter) external onlyOwner {
+        if (minter == address(0)) {
+            revert ZeroAddress();
+        }
+        if (minters[minter]) {
+            revert AlreadySet();
+        }
+        minters[minter] = true;
+        emit SetMinter(minter, true);
+    }
+
+    /// @notice - pause contract
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// @notice - unpause contract
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /* --- OWNER --- */
+
     /// @notice verify voucher signature
+    /// @param voucher - target voucher for verify
     /// @return address of signer
     function _verify(NFTVoucher calldata voucher)
         internal
@@ -241,6 +308,7 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
     }
 
     /// @notice returns voucher digest for recover
+    /// @param voucher - the target voucher from which the hash is generated
     function _hash(NFTVoucher calldata voucher)
         internal
         view
@@ -269,16 +337,8 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
             );
     }
 
-    /// @notice Returns the chain id of the current blockchain.
-    function getChainID() external view returns (uint256) {
-        uint256 id;
-        assembly {
-            id := chainid()
-        }
-        return id;
-    }
-
     /// @notice - check if sum of all vouchers fees equal 100
+    /// @param voucher - the target voucher from which checks the total value of fees (percentages) 
     function checkFeesSum(NFTVoucher calldata voucher)
         private
         pure
@@ -298,52 +358,5 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
         return sum == 100;
     }
 
-    /* --- OWNER --- */
-    ///@notice - getter for owner for check address on minter role
-    function isMinter(address minter) external view onlyOwner returns (bool) {
-        return minters[minter];
-    }
 
-    ///@notice - set new marketplace recipient address
-    ///@param newRecipient - recipient address
-    function updateRecipient(address newRecipient) external onlyOwner {
-        if (newRecipient == address(0)) {
-            revert ZeroAddress();
-        }
-        recipient = newRecipient;
-        emit UpdateRecipient(newRecipient);
-    }
-
-    ///@notice - removing minter
-    ///@param minter - minter address
-    function removeMinter(address minter) external onlyOwner {
-        if (!minters[minter]) {
-            revert AlreadySet();
-        }
-        minters[minter] = false;
-        emit SetMinter(minter, false);
-    }
-
-    ///@notice - adding a new minter
-    ///@param minter - minter address
-    function addMinter(address minter) external onlyOwner {
-        if (minter == address(0)) {
-            revert ZeroAddress();
-        }
-        if (minters[minter]) {
-            revert AlreadySet();
-        }
-        minters[minter] = true;
-        emit SetMinter(minter, true);
-    }
-
-    ///@notice - pause contract
-    function pause() external onlyOwner {
-        _pause();
-    }
-    
-    ///@notice - unpause contract
-    function unpause() external onlyOwner {
-        _unpause();
-    }
 }

@@ -45,23 +45,26 @@ describe("AssemblyCurated_v2", function () {
     );
   });
 
-
-  it("constructor", async function(){
+  it("constructor", async function () {
     const Marketplace = await ethers.getContractFactory("AssemblyCuratedV2");
 
-    await expect( Marketplace.deploy(
-      "0x0000000000000000000000000000000000000000",
-      [allowedCaller.address],
-      "0x0000000000000000000000000000000000000000",
-      [allowedCaller.address]
-    )).to.be.revertedWith("ZeroAddress()");
-    
-    await expect( Marketplace.deploy(
-      recipient.address,
-      ["0x0000000000000000000000000000000000000000"],
-      "0x0000000000000000000000000000000000000000",
-      [allowedCaller.address]
-    )).to.be.revertedWith('ZeroAddress()');
+    await expect(
+      Marketplace.deploy(
+        "0x0000000000000000000000000000000000000000",
+        [allowedCaller.address],
+        "0x0000000000000000000000000000000000000000",
+        [allowedCaller.address]
+      )
+    ).to.be.revertedWith("ZeroAddress()");
+
+    await expect(
+      Marketplace.deploy(
+        recipient.address,
+        ["0x0000000000000000000000000000000000000000"],
+        "0x0000000000000000000000000000000000000000",
+        [allowedCaller.address]
+      )
+    ).to.be.revertedWith("ZeroAddress()");
 
     let tmpMarketplace = await Marketplace.deploy(
       recipient.address,
@@ -80,46 +83,113 @@ describe("AssemblyCurated_v2", function () {
     );
 
     expect(await tmpMarketplace.owner()).to.be.equal(allowedCaller.address);
+  });
 
-  })
+  it("permissions", async function () {
+    await expect(
+      marketplace.createLot(erc721.address, 1, artist1.address, 100, false, 0)
+    ).to.be.revertedWith("OnlyAllowedCaller()");
+    await expect(
+      marketplace.batchCreateLots(
+        [erc721.address],
+        [1],
+        [artist1.address],
+        [100],
+        [false],
+        [0]
+      )
+    ).to.be.revertedWith("OnlyAllowedCaller()");
 
-  it("permissions", async function(){
-    await expect( marketplace.createLot(erc721.address, 1, artist1.address, 100, false, 0)).to.be.revertedWith('OnlyAllowedCaller()');
-    await expect( marketplace.batchCreateLots([erc721.address], [1], [artist1.address], [100], [false], [0])).to.be.revertedWith('OnlyAllowedCaller()');
-  
-    await expect(marketplace.connect(allowedCaller).cancelLot(1,artist1.address)).to.be.revertedWith("Ownable: caller is not the owner");
-    await expect(marketplace.connect(allowedCaller).batchCancelLots([1], [artist1.address])).to.be.revertedWith("Ownable: caller is not the owner");
-    await expect(marketplace.connect(allowedCaller).deactivateLot(1)).to.be.revertedWith("Ownable: caller is not the owner");
-    await expect(marketplace.connect(allowedCaller).batchDeactivateLots([1])).to.be.revertedWith("Ownable: caller is not the owner");
-    await expect(marketplace.connect(allowedCaller).activateLot(1)).to.be.revertedWith("Ownable: caller is not the owner");
-    await expect(marketplace.connect(allowedCaller).batchActivateLots([1])).to.be.revertedWith("Ownable: caller is not the owner");
-    await expect(marketplace.connect(allowedCaller).updateRecipient(recipient.address)).to.be.revertedWith("Ownable: caller is not the owner");
-    await expect(marketplace.connect(allowedCaller).addAllowedCaller(owner.address)).to.be.revertedWith("Ownable: caller is not the owner");
-    await expect(marketplace.connect(allowedCaller).removeAllowedCaller(owner.address)).to.be.revertedWith("Ownable: caller is not the owner");
-    await expect(marketplace.connect(allowedCaller).rescue(owner.address, erc721.address, 1, false, 0)).to.be.revertedWith("Ownable: caller is not the owner");
-  })
+    await expect(
+      marketplace.connect(allowedCaller).cancelLot(1, artist1.address)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(
+      marketplace.connect(allowedCaller).batchCancelLots([1], [artist1.address])
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(
+      marketplace.connect(allowedCaller).deactivateLot(1)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(
+      marketplace.connect(allowedCaller).batchDeactivateLots([1])
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(
+      marketplace.connect(allowedCaller).activateLot(1)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(
+      marketplace.connect(allowedCaller).batchActivateLots([1])
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(
+      marketplace.connect(allowedCaller).updateRecipient(recipient.address)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(
+      marketplace.connect(allowedCaller).addAllowedCaller(owner.address)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(
+      marketplace.connect(allowedCaller).removeAllowedCaller(owner.address)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(
+      marketplace
+        .connect(allowedCaller)
+        .rescue(owner.address, erc721.address, 1, false, 0)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+  });
 
-  it("supports interface", async function(){
-    expect(await marketplace.supportsInterface('0x4e2312e0')).to.be.equal(true);
-    expect(await marketplace.supportsInterface('0x01ffc9a7')).to.be.equal(true);
-    expect(await marketplace.supportsInterface('0x80ac58cd')).to.be.equal(false);
-  })
+  it("supports interface", async function () {
+    expect(await marketplace.supportsInterface("0x4e2312e0")).to.be.equal(true);
+    expect(await marketplace.supportsInterface("0x01ffc9a7")).to.be.equal(true);
+    expect(await marketplace.supportsInterface("0x80ac58cd")).to.be.equal(
+      false
+    );
+  });
 
-  it("received functions", async function(){
-    expect(await marketplace.onERC1155Received(erc1155.address, artist1.address, 1, 2, '0x00')).to.be.equal('0xf23a6e61');
-    expect(await marketplace.onERC1155BatchReceived(erc1155.address, artist1.address, [1], [2], '0x00')).to.be.equal('0xbc197c81');
-    expect(await marketplace.onERC721Received(erc721.address, artist1.address, 1, '0x00')).to.be.equal('0x150b7a02');
-  })
+  it("received functions", async function () {
+    expect(
+      await marketplace.onERC1155Received(
+        erc1155.address,
+        artist1.address,
+        1,
+        2,
+        "0x00"
+      )
+    ).to.be.equal("0xf23a6e61");
+    expect(
+      await marketplace.onERC1155BatchReceived(
+        erc1155.address,
+        artist1.address,
+        [1],
+        [2],
+        "0x00"
+      )
+    ).to.be.equal("0xbc197c81");
+    expect(
+      await marketplace.onERC721Received(
+        erc721.address,
+        artist1.address,
+        1,
+        "0x00"
+      )
+    ).to.be.equal("0x150b7a02");
+  });
 
-  it('support token', async function(){
+  it("support token", async function () {
     const ERC20 = await ethers.getContractFactory("ERC20");
     const erc20 = await ERC20.deploy("Test", "ERC");
     const Mock = await ethers.getContractFactory("MockToken");
     const mock = await Mock.deploy();
 
-    await expect(marketplace.connect(allowedCaller).createLot(erc20.address, 1, artist1.address, 1000, false, 0)).to.be.revertedWith("function selector was not recognized and there's no fallback function")
-    await expect(marketplace.connect(allowedCaller).createLot(mock.address, 1, artist1.address, 1000, false, 0)).to.be.revertedWith('InvalidToken()')
-  })
+    await expect(
+      marketplace
+        .connect(allowedCaller)
+        .createLot(erc20.address, 1, artist1.address, 1000, false, 0)
+    ).to.be.revertedWith(
+      "function selector was not recognized and there's no fallback function"
+    );
+    await expect(
+      marketplace
+        .connect(allowedCaller)
+        .createLot(mock.address, 1, artist1.address, 1000, false, 0)
+    ).to.be.revertedWith("InvalidToken()");
+  });
 
   describe("create lot", function () {
     beforeEach(async () => {
@@ -215,7 +285,7 @@ describe("AssemblyCurated_v2", function () {
       expect(activeLots[0].tokenId).to.be.equal(1);
     });
 
-    it("reject batch create with wrong lengths", async function(){
+    it("reject batch create with wrong lengths", async function () {
       await erc721
         .connect(artist1)
         .setApprovalForAll(marketplace.address, true);
@@ -224,12 +294,19 @@ describe("AssemblyCurated_v2", function () {
         .connect(artist1)
         .setApprovalForAll(marketplace.address, true);
 
-        
-      await  expect( marketplace
-      .connect(allowedCaller)
-      .batchCreateLots([erc721.address, erc1155.address], [1,1], [artist1.address], [100,100], [false, true], [0,10])
-      ).to.be.revertedWith('WrongArrayLength()')
-    })
+      await expect(
+        marketplace
+          .connect(allowedCaller)
+          .batchCreateLots(
+            [erc721.address, erc1155.address],
+            [1, 1],
+            [artist1.address],
+            [100, 100],
+            [false, true],
+            [0, 10]
+          )
+      ).to.be.revertedWith("WrongArrayLength()");
+    });
 
     it("success batch create", async function () {
       await erc721
@@ -362,17 +439,17 @@ describe("AssemblyCurated_v2", function () {
     });
 
     it("success erc721", async function () {
-      const balances =[];
-      balances[0]=await artist1.getBalance();
-      balances[2]=await buyer.getBalance();
-      balances[3]=await recipient.getBalance();
+      const balances = [];
+      balances[0] = await artist1.getBalance();
+      balances[2] = await buyer.getBalance();
+      balances[3] = await recipient.getBalance();
 
       const tx = await marketplace
         .connect(buyer)
         .buyLot(1, 0, { value: price });
 
       const txReciept = await tx.wait();
-      
+
       const events = txReciept.events!.filter((x) => x.event === "SellLot");
 
       expect(events.length).to.be.equal(1);
@@ -393,12 +470,19 @@ describe("AssemblyCurated_v2", function () {
       expect(activeLots[0].token).to.be.equal(erc1155.address);
       expect(activeLots[0].tokenId).to.be.equal(1);
 
-      const txPrice = txReciept.effectiveGasPrice.mul(txReciept.cumulativeGasUsed);
+      const txPrice = txReciept.effectiveGasPrice.mul(
+        txReciept.cumulativeGasUsed
+      );
 
-      expect(await artist1.getBalance()).to.be.equal(balances[0].add(lot.price.mul(80).div(100)));
-      expect(await buyer.getBalance()).to.be.equal(balances[2].sub(txPrice.add(price)));
-      expect(await recipient.getBalance()).to.be.equal(balances[3].add(lot.price.mul(20).div(100)));
-
+      expect(await artist1.getBalance()).to.be.equal(
+        balances[0].add(lot.price.mul(80).div(100))
+      );
+      expect(await buyer.getBalance()).to.be.equal(
+        balances[2].sub(txPrice.add(price))
+      );
+      expect(await recipient.getBalance()).to.be.equal(
+        balances[3].add(lot.price.mul(20).div(100))
+      );
     });
 
     it("success erc721 with dust", async function () {
@@ -427,7 +511,6 @@ describe("AssemblyCurated_v2", function () {
       const activeLots = await marketplace.getActiveLots(0, 1);
       expect(activeLots[0].token).to.be.equal(erc1155.address);
       expect(activeLots[0].tokenId).to.be.equal(1);
-
     });
 
     it("success erc1155", async function () {
@@ -540,13 +623,12 @@ describe("AssemblyCurated_v2", function () {
         .connect(allowedCaller)
         .createLot(erc721.address, 2, artist1.address, price, false, 0);
 
-      await expect( marketplace.batchCancelLots(
-        [1, 2, 3],
-        [
-          artist2.address,
-          artist2.address,
-        ]
-      )).to.be.revertedWith("WrongArrayLength()")
+      await expect(
+        marketplace.batchCancelLots(
+          [1, 2, 3],
+          [artist2.address, artist2.address]
+        )
+      ).to.be.revertedWith("WrongArrayLength()");
     });
 
     it("success batch", async function () {
@@ -686,7 +768,6 @@ describe("AssemblyCurated_v2", function () {
       expect(await marketplace.recipient()).to.be.equal(artist2.address);
     });
 
-
     it("allowed caller", async function () {
       expect(
         await marketplace.allowedCallers(allowedCaller.address)
@@ -744,7 +825,7 @@ describe("AssemblyCurated_v2", function () {
     );
     expect(activeLots.filter((x) => x.lotStart.eq(0)).length).to.be.equal(3);
 
-    activeLots = await marketplace.getActiveLots(0,2);
+    activeLots = await marketplace.getActiveLots(0, 2);
     expect(activeLots.length).to.be.equal(2);
   });
 
@@ -852,139 +933,301 @@ describe("AssemblyCurated_v2", function () {
     });
   });
 
-  describe('lazy minting', function (){
-
-    beforeEach(async () =>{
+  describe("lazy minting", function () {
+    beforeEach(async () => {
       lazyMinter = new LazyMinterV2(marketplace, allowedCaller);
-      await erc721["registerExtension(address,string)"](marketplace.address, '/test/uri/721');
-      await erc1155["registerExtension(address,string)"](marketplace.address, '/test/uri/1155');
-      
-    })
+      await erc721["registerExtension(address,string)"](
+        marketplace.address,
+        "/test/uri/721"
+      );
+      await erc1155["registerExtension(address,string)"](
+        marketplace.address,
+        "/test/uri/1155"
+      );
+    });
 
-    it('reject when voucher with invalid data', async function(){
-      const voucher = await lazyMinter.createVoucher(erc1155.address, 0, 100, false, 0 , '/test2/');
+    it("reject when voucher with invalid data", async function () {
+      const voucher = await lazyMinter.createVoucher(
+        erc1155.address,
+        0,
+        100,
+        false,
+        0,
+        "/test2/"
+      );
       const invalidVoucher = voucher;
 
       invalidVoucher.voucherId = BigNumber.from(voucher.voucherId).add(1);
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher)).to.be.revertedWith('InvalidSignature()');
-      invalidVoucher.voucherId=voucher.voucherId;
+      await expect(
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher)
+      ).to.be.revertedWith("InvalidSignature()");
+      invalidVoucher.voucherId = voucher.voucherId;
 
       invalidVoucher.amount = BigNumber.from(voucher.amount).add(1);
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher)).to.be.revertedWith('InvalidSignature()');
-      invalidVoucher.amount=voucher.amount;
+      await expect(
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher)
+      ).to.be.revertedWith("InvalidSignature()");
+      invalidVoucher.amount = voucher.amount;
 
       invalidVoucher.price = BigNumber.from(voucher.price).add(1);
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher)).to.be.revertedWith('InvalidSignature()');
-      invalidVoucher.price=voucher.price;
+      await expect(
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher)
+      ).to.be.revertedWith("InvalidSignature()");
+      invalidVoucher.price = voucher.price;
 
       invalidVoucher.tokenId = BigNumber.from(voucher.tokenId).add(1);
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher)).to.be.revertedWith('InvalidSignature()');
-      invalidVoucher.tokenId=voucher.tokenId;
+      await expect(
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher)
+      ).to.be.revertedWith("InvalidSignature()");
+      invalidVoucher.tokenId = voucher.tokenId;
 
       invalidVoucher.token = erc721.address;
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher)).to.be.revertedWith('InvalidSignature()');
-      invalidVoucher.token=voucher.token;
+      await expect(
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher)
+      ).to.be.revertedWith("InvalidSignature()");
+      invalidVoucher.token = voucher.token;
 
       invalidVoucher.is1155 = false;
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher)).to.be.revertedWith('InvalidSignature()');
-      invalidVoucher.is1155=true;
-    
+      await expect(
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher)
+      ).to.be.revertedWith("InvalidSignature()");
+      invalidVoucher.is1155 = true;
+
       invalidVoucher.uri = voucher.uri + "invalid";
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher)).to.be.revertedWith('InvalidSignature()');
-      invalidVoucher.uri=voucher.uri;    
-    })
+      await expect(
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher)
+      ).to.be.revertedWith("InvalidSignature()");
+      invalidVoucher.uri = voucher.uri;
+    });
 
-    it('reject when voucher with invalid signer', async function(){
+    it("reject when voucher with invalid signer", async function () {
       const invalidLazyMinter = new LazyMinterV2(marketplace, owner);
-      const voucher = await invalidLazyMinter.createVoucher(erc1155.address, 0, 100, true, 1 , '/test2/');
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher)).to.be.revertedWith('InvalidSignature()');
-    })
+      const voucher = await invalidLazyMinter.createVoucher(
+        erc1155.address,
+        0,
+        100,
+        true,
+        1,
+        "/test2/"
+      );
+      await expect(
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher)
+      ).to.be.revertedWith("InvalidSignature()");
+    });
 
-    it("reject when not enough value",async function(){
-      const voucher = await lazyMinter.createVoucher(erc1155.address, 0, 1000000, true, 1 , '/test2/');
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {value: BigNumber.from(voucher.price).mul(voucher.amount).sub(1)})).to.be.revertedWith('InvalidValue()');
-    })
+    it("reject when not enough value", async function () {
+      const voucher = await lazyMinter.createVoucher(
+        erc1155.address,
+        0,
+        1000000,
+        true,
+        1,
+        "/test2/"
+      );
+      await expect(
+        marketplace
+          .connect(buyer)
+          .buyWithMint(buyer.address, voucher, {
+            value: BigNumber.from(voucher.price).mul(voucher.amount).sub(1),
+          })
+      ).to.be.revertedWith("InvalidValue()");
+    });
 
-    it('reject when voucher is already used', async function(){
-      const voucher = await lazyMinter.createVoucher(erc1155.address, 0, 1000000, true, 1 , '/test2/');
-      await marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {value: BigNumber.from(voucher.price).mul(voucher.amount)})
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {value: BigNumber.from(voucher.price).mul(voucher.amount).sub(1)})).to.be.revertedWith('VoucherAlreadyUsed()');
-    })
+    it("reject when voucher is already used", async function () {
+      const voucher = await lazyMinter.createVoucher(
+        erc1155.address,
+        0,
+        1000000,
+        true,
+        1,
+        "/test2/"
+      );
+      await marketplace
+        .connect(buyer)
+        .buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        });
+      await expect(
+        marketplace
+          .connect(buyer)
+          .buyWithMint(buyer.address, voucher, {
+            value: BigNumber.from(voucher.price).mul(voucher.amount).sub(1),
+          })
+      ).to.be.revertedWith("VoucherAlreadyUsed()");
+    });
 
-    it('reject when invalid amount',async function(){
-      const voucher = await lazyMinter.createVoucher(erc1155.address, 0, 1000000, true, 0 , '/test2/');
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {value: BigNumber.from(voucher.price).mul(voucher.amount)})).to.be.revertedWith('InvalidAmount()');
-    })
+    it("reject when invalid amount", async function () {
+      const voucher = await lazyMinter.createVoucher(
+        erc1155.address,
+        0,
+        1000000,
+        true,
+        0,
+        "/test2/"
+      );
+      await expect(
+        marketplace
+          .connect(buyer)
+          .buyWithMint(buyer.address, voucher, {
+            value: BigNumber.from(voucher.price).mul(voucher.amount),
+          })
+      ).to.be.revertedWith("InvalidAmount()");
+    });
 
-    it('reject when token is not available for lazy minting',async function(){
+    it("reject when token is not available for lazy minting", async function () {
       await erc1155.unregisterExtension(marketplace.address);
-      const voucher = await lazyMinter.createVoucher(erc1155.address, 0, 1000000, true, 50 , '/test2/');
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {value: BigNumber.from(voucher.price).mul(voucher.amount)})).to.be.revertedWith('Must be registered extension');
-    })
+      const voucher = await lazyMinter.createVoucher(
+        erc1155.address,
+        0,
+        1000000,
+        true,
+        50,
+        "/test2/"
+      );
+      await expect(
+        marketplace
+          .connect(buyer)
+          .buyWithMint(buyer.address, voucher, {
+            value: BigNumber.from(voucher.price).mul(voucher.amount),
+          })
+      ).to.be.revertedWith("Must be registered extension");
+    });
 
-    it('reject when try mint not existing 1155', async function(){
-      const voucher = await lazyMinter.createVoucher(erc1155.address, 10, 1000000, true, 50 , '/test2/');
-      await expect(marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {value: BigNumber.from(voucher.price).mul(voucher.amount)})).to.be.revertedWith('A token was not created by this extension');
-    })
+    it("reject when try mint not existing 1155", async function () {
+      const voucher = await lazyMinter.createVoucher(
+        erc1155.address,
+        10,
+        1000000,
+        true,
+        50,
+        "/test2/"
+      );
+      await expect(
+        marketplace
+          .connect(buyer)
+          .buyWithMint(buyer.address, voucher, {
+            value: BigNumber.from(voucher.price).mul(voucher.amount),
+          })
+      ).to.be.revertedWith("A token was not created by this extension");
+    });
 
-    it('success 721 with equal value', async function(){
+    it("success 721 with equal value", async function () {
       const balanceEth = await buyer.getBalance();
       const balanceNFT = await erc721.balanceOf(buyer.address);
-      const voucher = await lazyMinter.createVoucher(erc721.address, 0, 100, false, 0 , '/test2/');
-      const tx = await marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {value: BigNumber.from(voucher.price)});
+      const voucher = await lazyMinter.createVoucher(
+        erc721.address,
+        0,
+        100,
+        false,
+        0,
+        "/test2/"
+      );
+      const tx = await marketplace
+        .connect(buyer)
+        .buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price),
+        });
       const reciept = await tx.wait();
       const txPrice = reciept.effectiveGasPrice.mul(reciept.cumulativeGasUsed);
-      const events  = reciept.events!.filter((x)=>x.event==='VoucherUsed');
+      const events = reciept.events!.filter((x) => x.event === "VoucherUsed");
       expect(events.length).to.be.equal(1);
 
       expect(events[0].args!.token).to.be.equal(erc721.address);
       expect(events[0].args!.tokenId).to.be.equal(1);
       expect(events[0].args!.voucherId).to.be.equal(voucher.voucherId);
       expect(events[0].args!.recipient).to.be.equal(buyer.address);
-      expect(await buyer.getBalance()).to.be.equal(balanceEth.sub(txPrice.add(voucher.price)));
-      expect(await erc721.balanceOf(buyer.address)).to.be.equal(balanceNFT.add(1))
+      expect(await buyer.getBalance()).to.be.equal(
+        balanceEth.sub(txPrice.add(voucher.price))
+      );
+      expect(await erc721.balanceOf(buyer.address)).to.be.equal(
+        balanceNFT.add(1)
+      );
       expect(await erc721.ownerOf(1)).to.be.equal(buyer.address);
-    })
+    });
 
-    it('success new 1155 with dusts',async function(){
+    it("success new 1155 with dusts", async function () {
       const balanceEth = await buyer.getBalance();
       const balanceNFT = await erc1155.balanceOf(buyer.address, 1);
-      const voucher = await lazyMinter.createVoucher(erc1155.address, 0, 100, true, 50 , '/test2/');
-      const tx = await marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {value: BigNumber.from(voucher.price).mul(voucher.amount).mul(2)});
+      const voucher = await lazyMinter.createVoucher(
+        erc1155.address,
+        0,
+        100,
+        true,
+        50,
+        "/test2/"
+      );
+      const tx = await marketplace
+        .connect(buyer)
+        .buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount).mul(2),
+        });
       const reciept = await tx.wait();
       const txPrice = reciept.effectiveGasPrice.mul(reciept.cumulativeGasUsed);
-      const events  = reciept.events!.filter((x)=>x.event==='VoucherUsed');
+      const events = reciept.events!.filter((x) => x.event === "VoucherUsed");
       expect(events.length).to.be.equal(1);
 
       expect(events[0].args!.token).to.be.equal(erc1155.address);
       expect(events[0].args!.tokenId).to.be.equal(1);
       expect(events[0].args!.voucherId).to.be.equal(voucher.voucherId);
       expect(events[0].args!.recipient).to.be.equal(buyer.address);
-      expect(await buyer.getBalance()).to.be.equal(balanceEth.sub(txPrice.add(BigNumber.from(voucher.price).mul(voucher.amount))));
-      expect(await erc1155.balanceOf(buyer.address,1)).to.be.equal(balanceNFT.add(50))
-    })
+      expect(await buyer.getBalance()).to.be.equal(
+        balanceEth.sub(
+          txPrice.add(BigNumber.from(voucher.price).mul(voucher.amount))
+        )
+      );
+      expect(await erc1155.balanceOf(buyer.address, 1)).to.be.equal(
+        balanceNFT.add(50)
+      );
+    });
 
-    it("success existing 1155", async function(){
+    it("success existing 1155", async function () {
       const balanceNFT = await erc1155.balanceOf(artist1.address, 1);
-      const voucher2 = await lazyMinter.createVoucher(erc1155.address, 0, 100, true, 100 , '/test2/');
-      await marketplace.connect(artist1).buyWithMint(artist1.address, voucher2, {value: BigNumber.from(voucher2.price).mul(voucher2.amount)});
+      const voucher2 = await lazyMinter.createVoucher(
+        erc1155.address,
+        0,
+        100,
+        true,
+        100,
+        "/test2/"
+      );
+      await marketplace
+        .connect(artist1)
+        .buyWithMint(artist1.address, voucher2, {
+          value: BigNumber.from(voucher2.price).mul(voucher2.amount),
+        });
 
       const balanceEth = await buyer.getBalance();
-      const voucher = await lazyMinter.createVoucher(erc1155.address, 1, 100, true, 50 , '/test2/');
-      const tx = await marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {value: BigNumber.from(voucher.price).mul(voucher.amount)});
+      const voucher = await lazyMinter.createVoucher(
+        erc1155.address,
+        1,
+        100,
+        true,
+        50,
+        "/test2/"
+      );
+      const tx = await marketplace
+        .connect(buyer)
+        .buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        });
       const reciept = await tx.wait();
       const txPrice = reciept.effectiveGasPrice.mul(reciept.cumulativeGasUsed);
-      const events  = reciept.events!.filter((x)=>x.event==='VoucherUsed');
+      const events = reciept.events!.filter((x) => x.event === "VoucherUsed");
       expect(events.length).to.be.equal(1);
 
       expect(events[0].args!.token).to.be.equal(erc1155.address);
       expect(events[0].args!.tokenId).to.be.equal(1);
       expect(events[0].args!.voucherId).to.be.equal(voucher.voucherId);
       expect(events[0].args!.recipient).to.be.equal(buyer.address);
-      expect(await buyer.getBalance()).to.be.equal(balanceEth.sub(txPrice.add(BigNumber.from(voucher.price).mul(voucher.amount))));
-      expect(await erc1155.balanceOf(buyer.address, 1)).to.be.equal(50)
-      expect(await erc1155.balanceOf(artist1.address,1)).to.be.equal(balanceNFT.add(100))
-    })
-
-  })
+      expect(await buyer.getBalance()).to.be.equal(
+        balanceEth.sub(
+          txPrice.add(BigNumber.from(voucher.price).mul(voucher.amount))
+        )
+      );
+      expect(await erc1155.balanceOf(buyer.address, 1)).to.be.equal(50);
+      expect(await erc1155.balanceOf(artist1.address, 1)).to.be.equal(
+        balanceNFT.add(100)
+      );
+    });
+  });
 });

@@ -33,7 +33,7 @@ class LazyMinterV2 {
    * @param {ethers.Contract} contract an ethers Contract that's wired up to the deployed contract
    * @param {ethers.Signer} signer a Signer whose account is authorized to mint NFTs on the deployed contract
    */
-  constructor( contract: AssemblyCuratedV2, signer: SignerWithAddress ) {
+  constructor(contract: AssemblyCuratedV2, signer: SignerWithAddress) {
     this.contract = contract;
     this.signer = signer;
     this._domain = null;
@@ -55,7 +55,7 @@ class LazyMinterV2 {
     is1155: boolean,
     amount: ethers.BigNumber | number,
     uri: string
-  ): Promise<AssemblyCuratedV2.NFTVoucherStruct > {
+  ): Promise<AssemblyCuratedV2.NFTVoucherStruct> {
     const voucherId = randomInt(281474976710655);
     const voucher = { voucherId, token, tokenId, price, is1155, amount, uri };
     const domain = await this._signingDomain();

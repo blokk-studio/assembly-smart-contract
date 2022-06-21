@@ -749,7 +749,7 @@ contract AssemblyCuratedV2 is
 
     /* --- OWNER --- */
 
-    function isMinter(address minter) external view onlyOwner returns (bool){
+    function isMinter(address minter) external view onlyOwner returns (bool) {
         return minters[minter];
     }
 

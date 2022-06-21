@@ -3,7 +3,7 @@ import ethers from "ethers";
 import { AssemblyCuratedV3 } from "../typechain-types/AssemblyCuratedV3";
 // These constants must match the ones used in the smart contract.
 const SIGNING_DOMAIN_NAME = "AssemblyCurated-LazyMintingNFT-Voucher";
-const SIGNING_DOMAIN_VERSION = "1";
+const SIGNING_DOMAIN_VERSION = "3";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 /**
@@ -33,7 +33,7 @@ class LazyMinterV3 {
    * @param {ethers.Contract} contract an ethers Contract that's wired up to the deployed contract
    * @param {ethers.Signer} signer a Signer whose account is authorized to mint NFTs on the deployed contract
    */
-  constructor( contract: AssemblyCuratedV3, signer: SignerWithAddress ) {
+  constructor(contract: AssemblyCuratedV3, signer: SignerWithAddress) {
     this.contract = contract;
     this.signer = signer;
     this._domain = null;
@@ -59,9 +59,21 @@ class LazyMinterV3 {
     ownerFee: number,
     definedWallets: string[],
     definedWalletsFees: number[]
-  ): Promise<AssemblyCuratedV3.NFTVoucherStruct > {
+  ): Promise<AssemblyCuratedV3.NFTVoucherStruct> {
     const voucherId = randomInt(281474976710655);
-    const voucher = { voucherId, token, tokenId, price, is1155, amount, uri, recipientFee, ownerFee, definedWallets, definedWalletsFees };
+    const voucher = {
+      voucherId,
+      token,
+      tokenId,
+      price,
+      is1155,
+      amount,
+      uri,
+      recipientFee,
+      ownerFee,
+      definedWallets,
+      definedWalletsFees,
+    };
     const domain = await this._signingDomain();
 
     const types = {
@@ -94,7 +106,7 @@ class LazyMinterV3 {
     if (this._domain != null) {
       return this._domain;
     }
-    const chainId = await this.contract.getChainID();
+    const chainId = await this.contract.INITIAL_CHAIN_ID();
     this._domain = {
       name: SIGNING_DOMAIN_NAME,
       version: SIGNING_DOMAIN_VERSION,
