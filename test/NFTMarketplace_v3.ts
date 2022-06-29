@@ -201,11 +201,9 @@ describe("AssemblyCurated_v3", function () {
         []
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher2, {
-            value: BigNumber.from(voucher2.price).mul(voucher2.amount).mul(2),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher2, {
+          value: BigNumber.from(voucher2.price).mul(voucher2.amount).mul(2),
+        })
       ).to.be.revertedWith("WrongArrayLength()");
     });
 
@@ -242,11 +240,9 @@ describe("AssemblyCurated_v3", function () {
         []
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount).sub(1),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount).sub(1),
+        })
       ).to.be.revertedWith("InvalidValue()");
     });
 
@@ -263,17 +259,13 @@ describe("AssemblyCurated_v3", function () {
         [],
         []
       );
-      await marketplace
-        .connect(buyer)
-        .buyWithMint(buyer.address, voucher, {
-          value: BigNumber.from(voucher.price).mul(voucher.amount),
-        });
+      await marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+        value: BigNumber.from(voucher.price).mul(voucher.amount),
+      });
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount).sub(1),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount).sub(1),
+        })
       ).to.be.revertedWith("VoucherAlreadyUsed()");
     });
 
@@ -291,11 +283,9 @@ describe("AssemblyCurated_v3", function () {
         []
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        })
       ).to.be.revertedWith("InvalidAmount()");
     });
 
@@ -314,11 +304,9 @@ describe("AssemblyCurated_v3", function () {
         []
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        })
       ).to.be.revertedWith("Must be registered extension");
     });
 
@@ -336,11 +324,9 @@ describe("AssemblyCurated_v3", function () {
         []
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        })
       ).to.be.revertedWith("A token was not created by this extension");
     });
 
@@ -358,11 +344,9 @@ describe("AssemblyCurated_v3", function () {
         [0]
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        })
       ).to.be.revertedWith("InvalidVoucherFees()");
 
       voucher = await lazyMinter.createVoucher(
@@ -378,11 +362,9 @@ describe("AssemblyCurated_v3", function () {
         [0]
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        })
       ).to.be.revertedWith("InvalidVoucherFees()");
 
       voucher = await lazyMinter.createVoucher(
@@ -398,11 +380,9 @@ describe("AssemblyCurated_v3", function () {
         [5]
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        })
       ).to.be.revertedWith("InvalidVoucherFees()");
 
       voucher = await lazyMinter.createVoucher(
@@ -418,11 +398,9 @@ describe("AssemblyCurated_v3", function () {
         [0]
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        })
       ).to.be.revertedWith("InvalidVoucherFees()");
 
       voucher = await lazyMinter.createVoucher(
@@ -438,11 +416,9 @@ describe("AssemblyCurated_v3", function () {
         [90]
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        })
       ).to.be.revertedWith("InvalidVoucherFees()");
     });
 
@@ -604,11 +580,9 @@ describe("AssemblyCurated_v3", function () {
         []
       );
       await expect(
-        marketplace
-          .connect(artist1)
-          .buyWithMint(artist1.address, voucher2, {
-            value: BigNumber.from(voucher2.price).mul(voucher2.amount),
-          })
+        marketplace.connect(artist1).buyWithMint(artist1.address, voucher2, {
+          value: BigNumber.from(voucher2.price).mul(voucher2.amount),
+        })
       ).to.be.revertedWith("Pausable: paused");
 
       tx = await marketplace.connect(owner).unpause();
@@ -640,11 +614,9 @@ describe("AssemblyCurated_v3", function () {
         [minter.address, artist1.address],
         [25, 5]
       );
-      await marketplace
-        .connect(buyer)
-        .buyWithMint(buyer.address, voucher2, {
-          value: BigNumber.from(voucher2.price).mul(voucher2.amount),
-        });
+      await marketplace.connect(buyer).buyWithMint(buyer.address, voucher2, {
+        value: BigNumber.from(voucher2.price).mul(voucher2.amount),
+      });
       const totalPtice = BigNumber.from(100 * 100);
       expect(await recipient.getBalance()).to.be.equal(
         recieptBalance.add(totalPtice.mul(50).div(100))

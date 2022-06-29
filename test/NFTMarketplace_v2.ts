@@ -1025,11 +1025,9 @@ describe("AssemblyCurated_v2", function () {
         "/test2/"
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount).sub(1),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount).sub(1),
+        })
       ).to.be.revertedWith("InvalidValue()");
     });
 
@@ -1042,17 +1040,13 @@ describe("AssemblyCurated_v2", function () {
         1,
         "/test2/"
       );
-      await marketplace
-        .connect(buyer)
-        .buyWithMint(buyer.address, voucher, {
-          value: BigNumber.from(voucher.price).mul(voucher.amount),
-        });
+      await marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+        value: BigNumber.from(voucher.price).mul(voucher.amount),
+      });
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount).sub(1),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount).sub(1),
+        })
       ).to.be.revertedWith("VoucherAlreadyUsed()");
     });
 
@@ -1066,11 +1060,9 @@ describe("AssemblyCurated_v2", function () {
         "/test2/"
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        })
       ).to.be.revertedWith("InvalidAmount()");
     });
 
@@ -1085,11 +1077,9 @@ describe("AssemblyCurated_v2", function () {
         "/test2/"
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        })
       ).to.be.revertedWith("Must be registered extension");
     });
 
@@ -1103,11 +1093,9 @@ describe("AssemblyCurated_v2", function () {
         "/test2/"
       );
       await expect(
-        marketplace
-          .connect(buyer)
-          .buyWithMint(buyer.address, voucher, {
-            value: BigNumber.from(voucher.price).mul(voucher.amount),
-          })
+        marketplace.connect(buyer).buyWithMint(buyer.address, voucher, {
+          value: BigNumber.from(voucher.price).mul(voucher.amount),
+        })
       ).to.be.revertedWith("A token was not created by this extension");
     });
 
