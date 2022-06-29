@@ -1,0 +1,34 @@
+image: node:16-alpine
+
+before_script:  
+  - apt-get update -qq && apt-get install
+  - apk add --no-cache git
+  - yarn install --frozen-lockfile
+
+stages:
+  - lint
+  - test
+
+lint:
+  dependencies: []
+  stage: lint
+  script:
+    - yarn run lint:check
+  rules:
+    - when: always
+  tags:
+    - web-test
+
+variables:
+  LC_ALL: "en_US.UTF-8"
+  LANG: "en_US.UTF-8"
+
+test:
+  dependencies: []
+  stage: test
+  script:
+    - yarn run test
+  rules:
+    - when: always
+  tags:
+    - web-test
