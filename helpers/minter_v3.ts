@@ -78,17 +78,17 @@ class LazyMinterV3 {
 
     const types = {
       NFTVoucher: [
-        { name: "voucherId", type: "uint256" },
-        { name: "token", type: "address" },
-        { name: "tokenId", type: "uint256" },
-        { name: "price", type: "uint256" },
-        { name: "is1155", type: "bool" },
-        { name: "amount", type: "uint256" },
-        { name: "uri", type: "string" },
-        { name: "recipientFee", type: "uint8" },
-        { name: "ownerFee", type: "uint8" },
-        { name: "definedWallets", type: "address[]" },
-        { name: "definedWalletsFees", type: "uint8[]" },
+        { name: 'voucherId', type: 'uint256' },
+        { name: 'tokenId', type: 'uint256' },
+        { name: 'price', type: 'uint256' },
+        { name: 'amount', type: 'uint256' },
+        { name: 'token', type: 'address' },
+        { name: 'definedWallets', type: 'address[]' },
+        { name: 'recipientFee', type: 'uint8' },
+        { name: 'ownerFee', type: 'uint8' },
+        { name: 'uri', type: 'string' },
+        { name: 'is1155', type: 'bool' },
+        { name: 'definedWalletsFees', type: 'uint8[]' },
       ],
     };
     const signature = await this.signer._signTypedData(domain, types, voucher);

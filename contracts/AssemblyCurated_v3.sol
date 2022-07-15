@@ -139,7 +139,7 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
         }
 
         // make sure signature is valid and get the address of the signer
-        address signer = _verify(voucher);
+        address signer = verify(voucher);
 
         // make sure that the signer is authorized to mint NFTs
         if (!minters[signer]) {
@@ -246,7 +246,7 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
     /* --- OWNER --- */
     /// @notice - getter for owner for check address on minter role
     /// @param minter - target address for check
-    function isMinter(address minter) external view onlyOwner returns (bool) {
+    function isMinter(address minter) external view returns (bool) {
         return minters[minter];
     }
 
@@ -293,13 +293,11 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
         _unpause();
     }
 
-    /* --- OWNER --- */
-
     /// @notice verify voucher signature
     /// @param voucher - target voucher for verify
     /// @return address of signer
-    function _verify(NFTVoucher calldata voucher)
-        internal
+    function verify(NFTVoucher calldata voucher)
+        public
         view
         returns (address)
     {
@@ -319,18 +317,18 @@ contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
                 keccak256(
                     abi.encode(
                         keccak256(
-                            "NFTVoucher(uint256 voucherId,address token,uint256 tokenId,uint256 price,bool is1155,uint256 amount,string uri,uint8 recipientFee,uint8 ownerFee,address[] definedWallets,uint8[] definedWalletsFees)"
+                            "NFTVoucher(uint256 voucherId,uint256 tokenId,uint256 price,uint256 amount,address token,address[] definedWallets,uint8 recipientFee,uint8 ownerFee,string uri,bool is1155,uint8[] definedWalletsFees)"
                         ),
                         voucher.voucherId,
-                        voucher.token,
                         voucher.tokenId,
                         voucher.price,
-                        voucher.is1155,
                         voucher.amount,
-                        keccak256(bytes(voucher.uri)),
+                        voucher.token,
+                        keccak256(abi.encodePacked(voucher.definedWallets)),
                         voucher.recipientFee,
                         voucher.ownerFee,
-                        keccak256(abi.encodePacked(voucher.definedWallets)),
+                        keccak256(bytes(voucher.uri)),
+                        voucher.is1155,
                         keccak256(abi.encodePacked(voucher.definedWalletsFees))
                     )
                 )
