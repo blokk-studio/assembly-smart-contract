@@ -13,7 +13,6 @@ lint:
   stage: lint
   script:
     - yarn lint:check
-  allow_failure: true # FIXME re-enable when all linting errors are fixed
   rules:
     - when: always
   tags:
