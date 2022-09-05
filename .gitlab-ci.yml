@@ -28,6 +28,7 @@ test:
   dependencies: []
   stage: test
   script:
+    - yarn run compile
     - yarn run test
   rules:
     - when: always
