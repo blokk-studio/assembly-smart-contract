@@ -1,6 +1,7 @@
 [
   "event AdminApproved(address indexed,address indexed)",
   "event AdminRevoked(address indexed,address indexed)",
+  "event Initialized(uint8)",
   "event OwnershipTransferred(address indexed,address indexed)",
   "function approveAdmin(address)",
   "function getAdmins() view returns (address[])",
