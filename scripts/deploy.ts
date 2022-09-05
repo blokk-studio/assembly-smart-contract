@@ -24,11 +24,11 @@ async function main() {
   /***************************************************************************
    ************************** AssemblyV2 Deployment **************************
    ***************************************************************************/
-  const _recipient = "0xE98e78034A3CE0fB2E44606af5b770a5B7C2bdb4";
-  const _owner = "0xE98e78034A3CE0fB2E44606af5b770a5B7C2bdb4";
+  const _recipient = "0xfEaE88b979ec76FF83F96dfBb5CFca42b92B6A1F";
+  const _owner = "0xfEaE88b979ec76FF83F96dfBb5CFca42b92B6A1F";
   const _minters: string[] = [
-    "0x27d88E8a7Bd378bC17D4d8A0F5b3305Cd42c7fDB",
-    "0xE98e78034A3CE0fB2E44606af5b770a5B7C2bdb4",
+    "0xfEaE88b979ec76FF83F96dfBb5CFca42b92B6A1F",
+    "0xEF5245d9685CD918a2Bf0d216c2e7091446AcFF6",
     "0xD71b6d2C8f4a088396983d5586866563fcA75447",
   ];
   const AssemblyCurated = await ethers.getContractFactory("AssemblyV2");
