@@ -1,7 +1,6 @@
 image: node:16-alpine
 
 before_script:  
-  - apt-get update -qq && apt-get install
   - apk add --no-cache git
   - yarn install --frozen-lockfile
   - cp .env.example .env
