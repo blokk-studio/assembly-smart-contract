@@ -1,9 +1,9 @@
 import { randomInt } from "crypto";
 import ethers from "ethers";
-import { AssemblyCuratedV2 } from "../typechain-types/AssemblyCuratedV2";
+import { AssemblyV2 } from "../typechain-types/AssemblyV2";
 // These constants must match the ones used in the smart contract.
 const SIGNING_DOMAIN_NAME = "AssemblyCurated-LazyMintingNFT-Voucher";
-const SIGNING_DOMAIN_VERSION = "1";
+const SIGNING_DOMAIN_VERSION = "3";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 /**
@@ -23,7 +23,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
  * LazyMinter is a helper class that creates NFTVoucher objects and signs them, to be redeemed later by the LazyNFT contract.
  */
 class LazyMinterV2 {
-  contract: AssemblyCuratedV2;
+  contract: AssemblyV2;
   signer: SignerWithAddress;
   _domain: object | null;
   /**
@@ -33,7 +33,7 @@ class LazyMinterV2 {
    * @param {ethers.Contract} contract an ethers Contract that's wired up to the deployed contract
    * @param {ethers.Signer} signer a Signer whose account is authorized to mint NFTs on the deployed contract
    */
-  constructor(contract: AssemblyCuratedV2, signer: SignerWithAddress) {
+  constructor(contract: AssemblyV2, signer: SignerWithAddress) {
     this.contract = contract;
     this.signer = signer;
     this._domain = null;
@@ -54,21 +54,41 @@ class LazyMinterV2 {
     price: ethers.BigNumber | number = 0,
     is1155: boolean,
     amount: ethers.BigNumber | number,
-    uri: string
-  ): Promise<AssemblyCuratedV2.NFTVoucherStruct> {
+    uri: string,
+    recipientFee: number,
+    ownerFee: number,
+    definedWallets: string[],
+    definedWalletsFees: number[]
+  ): Promise<AssemblyV2.NFTVoucherStruct> {
     const voucherId = randomInt(281474976710655);
-    const voucher = { voucherId, token, tokenId, price, is1155, amount, uri };
+    const voucher = {
+      voucherId,
+      token,
+      tokenId,
+      price,
+      is1155,
+      amount,
+      uri,
+      recipientFee,
+      ownerFee,
+      definedWallets,
+      definedWalletsFees,
+    };
     const domain = await this._signingDomain();
 
     const types = {
       NFTVoucher: [
         { name: "voucherId", type: "uint256" },
-        { name: "token", type: "address" },
         { name: "tokenId", type: "uint256" },
         { name: "price", type: "uint256" },
-        { name: "is1155", type: "bool" },
         { name: "amount", type: "uint256" },
+        { name: "token", type: "address" },
+        { name: "definedWallets", type: "address[]" },
+        { name: "recipientFee", type: "uint8" },
+        { name: "ownerFee", type: "uint8" },
         { name: "uri", type: "string" },
+        { name: "is1155", type: "bool" },
+        { name: "definedWalletsFees", type: "uint8[]" },
       ],
     };
     const signature = await this.signer._signTypedData(domain, types, voucher);
@@ -86,7 +106,7 @@ class LazyMinterV2 {
     if (this._domain != null) {
       return this._domain;
     }
-    const chainId = await this.contract.getChainID();
+    const chainId = await this.contract.INITIAL_CHAIN_ID();
     this._domain = {
       name: SIGNING_DOMAIN_NAME,
       version: SIGNING_DOMAIN_VERSION,
@@ -98,6 +118,3 @@ class LazyMinterV2 {
 }
 
 export default LazyMinterV2;
-// module.exports = {
-//   LazyMinter
-// }
