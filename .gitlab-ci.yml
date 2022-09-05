@@ -1,0 +1,34 @@
+image: node:16
+
+before_script:  
+  - yarn install --frozen-lockfile
+  - cp .env.example .env
+
+stages:
+  - lint
+  - test
+
+lint:
+  dependencies: []
+  stage: lint
+  script:
+    - yarn lint:check
+  rules:
+    - when: always
+  tags:
+    - web-test
+
+variables:
+  LC_ALL: "en_US.UTF-8"
+  LANG: "en_US.UTF-8"
+
+test:
+  dependencies: []
+  stage: test
+  script:
+    - yarn compile
+    - yarn test
+  rules:
+    - when: always
+  tags:
+    - web-test
