@@ -9,6 +9,7 @@
   "event ExtensionRegistered(address indexed,address indexed)",
   "event ExtensionRoyaltiesUpdated(address indexed,address[],uint256[])",
   "event ExtensionUnregistered(address indexed,address indexed)",
+  "event Initialized(uint8)",
   "event MintPermissionsUpdated(address indexed,address indexed,address indexed)",
   "event OwnershipTransferred(address indexed,address indexed)",
   "event RoyaltiesUpdated(uint256 indexed,address[],uint256[])",

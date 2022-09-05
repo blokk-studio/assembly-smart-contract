@@ -1,7 +1,6 @@
-image: node:16-alpine
+image: node:16
 
 before_script:  
-  - apk add --no-cache git
   - yarn install --frozen-lockfile
   - cp .env.example .env
 
@@ -13,8 +12,7 @@ lint:
   dependencies: []
   stage: lint
   script:
-    - yarn run lint:check
-  allow_failure: true # FIXME re-enable when all linting errors are fixed
+    - yarn lint:check
   rules:
     - when: always
   tags:
@@ -28,8 +26,8 @@ test:
   dependencies: []
   stage: test
   script:
-    - yarn run compile
-    - yarn run test
+    - yarn compile
+    - yarn test
   rules:
     - when: always
   tags:

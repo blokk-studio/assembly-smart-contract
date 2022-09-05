@@ -206,7 +206,7 @@ describe("AssemblyCurated_v1", function () {
         marketplace
           .connect(allowedCaller)
           .createLot(erc721.address, 1, artist1.address, "1000", false, 0)
-      ).to.be.revertedWith("ERC721: transfer caller is not owner nor approve");
+      ).to.be.revertedWith("ERC721: caller is not token owner nor approved");
     });
 
     it("reject when erc1155 amount is zero", async function () {
