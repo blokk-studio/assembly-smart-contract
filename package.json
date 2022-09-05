@@ -60,6 +60,9 @@
     "lint:fix": "yarn prettier:fix && yarn solhint:fix && npx eslint **/*.{js,ts} --fix"
   },
   "devDependencies": {
+    "@ethersproject/abi": "^5.0.0",
+    "@ethersproject/bytes": "^5.0.0",
+    "@ethersproject/providers": "^5.0.0",
     "@manifoldxyz/libraries-solidity": "^1.0.2",
     "@nomiclabs/hardhat-ethers": "^2.0.4",
     "@nomiclabs/hardhat-etherscan": "^3.0.0",
@@ -84,6 +87,7 @@
     "hardhat-abi-exporter": "^2.8.0",
     "hardhat-contract-sizer": "^2.4.0",
     "hardhat-gas-reporter": "^1.0.7",
+    "lodash": "^4.17.15",
     "prettier": "^2.5.1",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
     "solidity-coverage": "^0.7.18",
@@ -91,5 +95,6 @@
     "typechain": "^7.0.0",
     "typescript": "^4.5.5",
     "xdeployer": "^1.1.1"
-  }
+  },
+  "dependencies": {}
 }
