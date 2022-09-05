@@ -54,8 +54,8 @@
     "deploy:fuse": "npx hardhat run --network fuse scripts/deploy.ts",
     "prettier:check": "prettier -c **/*.{js,ts,md,sol}",
     "prettier:fix": "prettier --write **/*.{js,ts,md,sol}",
-    "solhint:check": "npx solhint 'contracts/**/*.sol'",
-    "solhint:fix": "npx solhint 'contracts/**/*.sol' --fix",
+    "solhint:check": "npx solhint 'contracts/*.sol'",
+    "solhint:fix": "npx solhint 'contracts/*.sol' --fix",
     "lint:check": "yarn prettier:check && yarn solhint:check && npx eslint **/*.{js,ts}",
     "lint:fix": "yarn prettier:fix && yarn solhint:fix && npx eslint **/*.{js,ts} --fix"
   },

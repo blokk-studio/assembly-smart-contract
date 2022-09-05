@@ -17,6 +17,7 @@ describe("AssemblyV2", function () {
     buyer: SignerWithAddress;
   let lazyMinter: LazyMinterV2;
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const price = "1000";
 
   before(async () => {
