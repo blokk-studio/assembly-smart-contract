@@ -1,6 +1,6 @@
 import { randomInt } from "crypto";
 import ethers from "ethers";
-import { AssemblyCuratedV3 } from "../typechain-types/AssemblyCuratedV3";
+import { AssemblyV2 } from "../typechain-types/AssemblyV2";
 // These constants must match the ones used in the smart contract.
 const SIGNING_DOMAIN_NAME = "AssemblyCurated-LazyMintingNFT-Voucher";
 const SIGNING_DOMAIN_VERSION = "3";
@@ -23,7 +23,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
  * LazyMinter is a helper class that creates NFTVoucher objects and signs them, to be redeemed later by the LazyNFT contract.
  */
 class LazyMinterV3 {
-  contract: AssemblyCuratedV3;
+  contract: AssemblyV2;
   signer: SignerWithAddress;
   _domain: object | null;
   /**
@@ -33,7 +33,7 @@ class LazyMinterV3 {
    * @param {ethers.Contract} contract an ethers Contract that's wired up to the deployed contract
    * @param {ethers.Signer} signer a Signer whose account is authorized to mint NFTs on the deployed contract
    */
-  constructor(contract: AssemblyCuratedV3, signer: SignerWithAddress) {
+  constructor(contract: AssemblyV2, signer: SignerWithAddress) {
     this.contract = contract;
     this.signer = signer;
     this._domain = null;
@@ -59,7 +59,7 @@ class LazyMinterV3 {
     ownerFee: number,
     definedWallets: string[],
     definedWalletsFees: number[]
-  ): Promise<AssemblyCuratedV3.NFTVoucherStruct> {
+  ): Promise<AssemblyV2.NFTVoucherStruct> {
     const voucherId = randomInt(281474976710655);
     const voucher = {
       voucherId,

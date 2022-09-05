@@ -20,7 +20,7 @@ import "./manifold/core/IERC721CreatorCore.sol";
 import "./manifold/core/IERC1155CreatorCore.sol";
 import "./utils/TransferHelper.sol";
 
-contract AssemblyCuratedV3 is ReentrancyGuard, Ownable, Pausable, EIP712 {
+contract AssemblyV2 is ReentrancyGuard, Ownable, Pausable, EIP712 {
     struct NFTVoucher {
         /// @notice The id of the voucher. Must be unique - if another token with this ID already exists, the redeem function will revert.
         uint256 voucherId;

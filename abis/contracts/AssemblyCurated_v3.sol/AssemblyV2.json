@@ -27,5 +27,6 @@
   "function transferOwnership(address)",
   "function unpause()",
   "function updateRecipient(address)",
-  "function usedVouchers(uint256) view returns (bool)"
+  "function usedVouchers(uint256) view returns (bool)",
+  "function verify(tuple(uint256,uint256,uint256,uint256,address,address[],uint8,uint8,string,bytes,bool,uint8[])) view returns (address)"
 ]
