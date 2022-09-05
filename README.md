@@ -35,5 +35,6 @@ npx hardhat verify --network ethMain --constructor-args arguments.js <DEPLOYED_C
 > The file [`arguments.js`](./arguments.js) includes the confirmed constructor arguments used for the production deployment.
 
 ## Deployments
+
 - Ethereum Mainnet: [`0x6657eEa3624f05184f238F72dB81A10Cc20117D6`](https://etherscan.io/address/0x6657eEa3624f05184f238F72dB81A10Cc20117D6)
 - Rinkeby: [`0x6657eEa3624f05184f238F72dB81A10Cc20117D6`](https://rinkeby.etherscan.io/address/0x6657eEa3624f05184f238F72dB81A10Cc20117D6)

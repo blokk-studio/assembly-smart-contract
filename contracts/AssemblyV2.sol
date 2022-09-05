@@ -48,7 +48,8 @@ contract AssemblyV2 is ReentrancyGuard, Ownable, Pausable, EIP712 {
         uint8[] definedWalletsFees;
     }
 
-    string private constant _SIGNING_DOMAIN = "AssemblyCurated-LazyMintingNFT-Voucher";
+    string private constant _SIGNING_DOMAIN =
+        "AssemblyCurated-LazyMintingNFT-Voucher";
     string private constant _SIGNATURE_VERSION = "3";
     uint256 public immutable INITIAL_CHAIN_ID;
 
@@ -65,9 +66,9 @@ contract AssemblyV2 is ReentrancyGuard, Ownable, Pausable, EIP712 {
     /// @param isAllowed - boolean indicating whether a minter has been added or removed
     event SetMinter(address indexed caller, bool isAllowed);
     /// @notice - signals use of the voucher
-    /// @param token - address of target minted token 
+    /// @param token - address of target minted token
     /// @param tokenId - id of target minted token
-    /// @param recipient - 
+    /// @param recipient -
     /// @param voucherId - used voucher id
     event VoucherUsed(
         address indexed token,
@@ -198,7 +199,7 @@ contract AssemblyV2 is ReentrancyGuard, Ownable, Pausable, EIP712 {
                 voucher.uri
             );
         }
-        
+
         usedVouchers[voucher.voucherId] = true;
 
         uint256 sendValue;
@@ -296,11 +297,7 @@ contract AssemblyV2 is ReentrancyGuard, Ownable, Pausable, EIP712 {
     /// @notice verify voucher signature
     /// @param voucher - target voucher for verify
     /// @return address of signer
-    function verify(NFTVoucher calldata voucher)
-        public
-        view
-        returns (address)
-    {
+    function verify(NFTVoucher calldata voucher) public view returns (address) {
         bytes32 digest = _hash(voucher);
         return ECDSA.recover(digest, voucher.signature);
     }
@@ -336,7 +333,7 @@ contract AssemblyV2 is ReentrancyGuard, Ownable, Pausable, EIP712 {
     }
 
     /// @notice - check if sum of all vouchers fees equal 100
-    /// @param voucher - the target voucher from which checks the total value of fees (percentages) 
+    /// @param voucher - the target voucher from which checks the total value of fees (percentages)
     function checkFeesSum(NFTVoucher calldata voucher)
         private
         pure
@@ -355,6 +352,4 @@ contract AssemblyV2 is ReentrancyGuard, Ownable, Pausable, EIP712 {
 
         return sum == 100;
     }
-
-
 }
