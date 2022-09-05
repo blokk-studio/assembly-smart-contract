@@ -13,7 +13,7 @@ lint:
   dependencies: []
   stage: lint
   script:
-    - yarn run lint:check
+    - yarn lint:check
   allow_failure: true # FIXME re-enable when all linting errors are fixed
   rules:
     - when: always
@@ -28,8 +28,8 @@ test:
   dependencies: []
   stage: test
   script:
-    - yarn run compile
-    - yarn run test
+    - yarn compile
+    - yarn test
   rules:
     - when: always
   tags:
