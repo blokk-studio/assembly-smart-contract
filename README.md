@@ -43,5 +43,5 @@ npx hardhat verify --network ethMain --constructor-args arguments.js <DEPLOYED_C
 
 ### `AssemblyV2`
 
-- Ethereum Mainnet: [`TBD`]()
+- Ethereum Mainnet: [`0xa16A904Ed7AAf474832e5bC3f17aF24fc549Fd8b`](https://etherscan.io/address/0xa16A904Ed7AAf474832e5bC3f17aF24fc549Fd8b)
 - Rinkeby: [`0xa16A904Ed7AAf474832e5bC3f17aF24fc549Fd8b`](https://rinkeby.etherscan.io/address/0xa16A904Ed7AAf474832e5bC3f17aF24fc549Fd8b)
