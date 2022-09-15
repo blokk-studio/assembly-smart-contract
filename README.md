@@ -40,8 +40,10 @@ npx hardhat verify --network ethMain --constructor-args arguments.js <DEPLOYED_C
 
 - Ethereum Mainnet: [`0x6657eEa3624f05184f238F72dB81A10Cc20117D6`](https://etherscan.io/address/0x6657eEa3624f05184f238F72dB81A10Cc20117D6)
 - Rinkeby: [`0x6657eEa3624f05184f238F72dB81A10Cc20117D6`](https://rinkeby.etherscan.io/address/0x6657eEa3624f05184f238F72dB81A10Cc20117D6)
+- Goerli: [`0x1f6158Eee5F6e178149be6723D2292524dFA8B0d`](https://goerli.etherscan.io/address/0x1f6158Eee5F6e178149be6723D2292524dFA8B0d)
 
 ### `AssemblyV2`
 
 - Ethereum Mainnet: [`0xa16A904Ed7AAf474832e5bC3f17aF24fc549Fd8b`](https://etherscan.io/address/0xa16A904Ed7AAf474832e5bC3f17aF24fc549Fd8b)
 - Rinkeby: [`0xa16A904Ed7AAf474832e5bC3f17aF24fc549Fd8b`](https://rinkeby.etherscan.io/address/0xa16A904Ed7AAf474832e5bC3f17aF24fc549Fd8b)
+- Goerli: [`0xd5658e51be19d1CA71F812b46973a0B1CCa271d3`](https://goerli.etherscan.io/address/0xd5658e51be19d1CA71F812b46973a0B1CCa271d3)
