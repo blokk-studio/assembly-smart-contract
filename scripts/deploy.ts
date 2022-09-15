@@ -33,7 +33,7 @@ async function main() {
   ];
   const AssemblyCurated = await ethers.getContractFactory("AssemblyV2");
   const contract = await AssemblyCurated.deploy(_recipient, _owner, _minters);
-  
+
   await contract.deployed();
 
   console.log("Assembly contract deployed to:", contract.address);
